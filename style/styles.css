@@ -1,0 +1,954 @@
+/* ============================================
+   PSA QUEUING SYSTEM - MAIN STYLES
+   Philippine Statistics Authority
+   White Minimal Aesthetic Theme
+   ============================================ */
+
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f5f7fa;
+    color: #1a1a2e;
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Background Overlay */
+.bg-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('images/psaa.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    opacity: 0.08;
+    z-index: -1;
+}
+
+/* ============================================
+   IMAGE STYLES
+   ============================================ */
+.psa-logo {
+    width: 100px;
+    height: 100px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 3px solid rgba(44, 95, 138, 0.2);
+    overflow: hidden;
+    padding: 10px;
+}
+
+.psa-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.small-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.logo-icon-small {
+    width: 36px;
+    height: 36px;
+    background: rgba(44, 95, 138, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 5px;
+}
+
+.option-img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.option-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+/* ============================================
+   SCREEN MANAGEMENT
+   ============================================ */
+.screen {
+    display: none;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+}
+
+.screen.active {
+    display: block;
+}
+
+/* ============================================
+   SERVICE SELECTION SCREEN
+   ============================================ */
+.service-selection-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 24px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.psa-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.psa-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.psa-header p {
+    color: #2c5f8a;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.description-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 32px;
+    text-align: center;
+    margin-bottom: 40px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.description-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(44, 95, 138, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    color: #2c5f8a;
+}
+
+.description-card h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 12px;
+}
+
+.description-text {
+    color: #4a5568;
+    line-height: 1.6;
+    font-size: 15px;
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+.options-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.option-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.option-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    background: rgba(255, 255, 255, 0.98);
+}
+
+.option-card.selected {
+    border-color: #2c5f8a;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 0 0 3px rgba(44, 95, 138, 0.2);
+}
+
+/* GREEN for Priority - Updated */
+.priority-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.regular-icon {
+    background: rgba(44, 95, 138, 0.1);
+    color: #2c5f8a;
+}
+
+.option-card h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1a1a2e;
+}
+
+.option-card p {
+    font-size: 13px;
+    color: #4a5568;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+/* Badges - Updated Priority to Green */
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-priority {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.badge-regular {
+    background: rgba(44, 95, 138, 0.1);
+    color: #2c5f8a;
+}
+
+.info-note {
+    text-align: center;
+    font-size: 13px;
+    color: white;
+    background: rgba(0,0,0,0.6);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 30px;
+    margin: 0 auto;
+    backdrop-filter: blur(5px);
+}
+
+/* ============================================
+   MAIN REGISTRATION SCREEN
+   ============================================ */
+.main-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* App Header */
+.app-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background: rgba(0,0,0,0.05);
+    color: #1a1a2e;
+}
+
+.logo-small {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-text-small {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1a1a2e;
+}
+
+.mode-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4a5568;
+}
+
+.mode-dot {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ============================================
+   CURRENTLY SERVING SECTION - SEPARATE
+   ============================================ */
+.currently-serving-section {
+    background: linear-gradient(135deg, #2c5f8a 0%, #1e4a6e 100%);
+    border-radius: 20px;
+    padding: 24px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.section-title h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title .badge {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: 6px 14px;
+}
+
+.serving-card {
+    text-align: center;
+    color: white;
+}
+
+.serving-card .serving-number {
+    font-size: 72px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: 2px;
+}
+
+.serving-card .serving-type {
+    font-size: 18px;
+    opacity: 0.95;
+}
+
+/* Dashboard Layout */
+.dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+/* ============================================
+   REGISTRATION PANEL
+   ============================================ */
+.registration-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 28px;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.service-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(44, 95, 138, 0.1);
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
+
+.service-badge span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2c5f8a;
+}
+
+.registration-panel h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1a1a2e;
+}
+
+.form-subtitle {
+    color: #4a5568;
+    font-size: 14px;
+    margin-bottom: 28px;
+}
+
+.modern-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1a1a2e;
+}
+
+.form-field input,
+.form-field select {
+    padding: 10px 14px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    background: white;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+    outline: none;
+    border-color: #2c5f8a;
+    box-shadow: 0 0 0 3px rgba(44, 95, 138, 0.1);
+}
+
+.submit-btn {
+    background: #2c5f8a;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.submit-btn:hover {
+    background: #1e4a6e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 95, 138, 0.3);
+}
+
+.queue-info-card {
+    margin-top: 28px;
+    padding: 20px;
+    background: rgba(248, 249, 250, 0.9);
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.queue-info-card h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.queue-number-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+}
+
+.queue-number-display .label {
+    font-size: 14px;
+    color: #4a5568;
+}
+
+.queue-number-display .number {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2c5f8a;
+}
+
+.waiting-info {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    font-size: 14px;
+}
+
+/* ============================================
+   QUEUE PANEL
+   ============================================ */
+.queue-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 28px;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.queue-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-controls {
+    display: flex;
+    gap: 12px;
+}
+
+.admin-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.call-btn {
+    background: #10b981;
+    color: white;
+}
+
+.call-btn:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.complete-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.complete-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.queue-list-container {
+    max-height: 320px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.queue-item {
+    background: rgba(248, 249, 250, 0.9);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+    border-left: 3px solid #2c5f8a;
+}
+
+/* Priority Queue Item - Updated to Green */
+.queue-item.priority-queue {
+    border-left-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.queue-item:hover {
+    transform: translateX(5px);
+    background: white;
+}
+
+.queue-number {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.queue-name {
+    font-size: 12px;
+    color: #4a5568;
+    margin-top: 4px;
+}
+/* Add this to your existing styles.css - Update queue-stats grid */
+.queue-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    padding: 16px;
+    background: rgba(248, 249, 250, 0.9);
+    border-radius: 12px;
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+    .queue-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Queue Type Badges - Updated Priority to Green */
+.queue-type {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.queue-type.priority {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.queue-type.regular {
+    background: rgba(44, 95, 138, 0.1);
+    color: #2c5f8a;
+}
+
+.empty-queue-message {
+    text-align: center;
+    padding: 40px;
+    color: #4a5568;
+}
+
+.queue-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 16px;
+    background: rgba(248, 249, 250, 0.9);
+    border-radius: 12px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 11px;
+    color: #4a5568;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+/* Priority Stat - Updated to Green */
+.stat-value#priorityCount {
+    color: #10b981;
+}
+
+/* ============================================
+   MODAL
+   ============================================ */
+.modal-custom {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-custom.active {
+    display: flex;
+}
+
+.modal-content-custom {
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: modalSlideIn 0.3s ease;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-icon {
+    width: 70px;
+    height: 70px;
+    background: #10b981;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 36px;
+    color: white;
+}
+
+.modal-queue-number {
+    font-size: 48px;
+    font-weight: 700;
+    color: #2c5f8a;
+    margin: 16px 0;
+}
+
+.modal-btn {
+    margin-top: 20px;
+    padding: 10px 28px;
+    background: #2c5f8a;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-btn:hover {
+    background: #1e4a6e;
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(241, 241, 241, 0.5);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(193, 193, 193, 0.7);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 968px) {
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .options-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .service-selection-container {
+        padding: 40px 20px;
+    }
+    
+    .psa-header h1 {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 576px) {
+    .registration-panel,
+    .queue-panel {
+        padding: 20px;
+    }
+    
+    .serving-card .serving-number {
+        font-size: 48px;
+    }
+    
+    .modal-queue-number {
+        font-size: 36px;
+    }
+    
+    .app-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .header-left {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .queue-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .info-note {
+        font-size: 11px;
+        padding: 6px 16px;
+    }
+    
+    .psa-logo {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .queue-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .admin-controls {
+        justify-content: stretch;
+    }
+    
+    .admin-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .description-card {
+        padding: 24px;
+    }
+    
+    .option-card {
+        padding: 24px 16px;
+    }
+    
+    .queue-number-display .number {
+        font-size: 28px;
+    }
+    
+    .section-title h2 {
+        font-size: 16px;
+    }
+}

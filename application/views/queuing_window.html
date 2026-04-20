@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSA Queuing System | Philippine Statistics Authority</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="<?php echo base_url();?>style/styles.css">
+</head>
+<body>
+
+<!-- Background Overlay -->
+<div class="bg-overlay"></div>
+
+<!-- Service Selection Screen -->
+<div id="service_selection_screen" class="screen active">
+    <div class="service-selection-container">
+        <div class="psa-header">
+            <div class="psa-logo">
+                <img src="images/logopsa.webp" alt="PSA Logo" class="psa-logo-img" onerror="this.src='https://placehold.co/80x80/2c5f8a/white?text=PSA'">
+            </div>
+            <h1>Philippine Statistics Authority</h1>
+            <p>Civil Registration and Vital Statistics</p>
+        </div>
+
+        <div class="description-card">
+            <div class="description-icon">
+                <i class="bi bi-info-circle-fill fs-2"></i>
+            </div>
+            <h2>Choose Your Service Type</h2>
+            <p class="description-text">
+                To help us provide appropriate assistance and a smoother experience,
+                you may choose your service type below. Priority service is available
+                for individuals who may need additional support, such as senior citizens,
+                persons with disabilities (PWD), pregnant individuals, or others who qualify.
+            </p>
+        </div>
+
+        <div class="options-container">
+            <div class="option-card" data-service="priority">
+                <div class="option-icon priority-icon">
+                    <img src="images/p1.png" alt="Priority" class="option-img" onerror="this.src='https://placehold.co/70x70/10b981/white?text=⭐'">
+                </div>
+                <h3>Priority Service</h3>
+                <p>For senior citizens, PWDs, pregnant women, and individuals needing special assistance</p>
+                <span class="badge badge-priority">Priority Lane</span>
+            </div>
+
+            <div class="option-card" data-service="regular">
+                <div class="option-icon regular-icon">
+                    <img src="images/p2.png" alt="Regular" class="option-img" onerror="this.src='https://placehold.co/70x70/2c5f8a/white?text=👤'">
+                </div>
+                <h3>Regular Service</h3>
+                <p>Standard queue for general civil registration transactions and services</p>
+                <span class="badge badge-regular">Regular Lane</span>
+            </div>
+        </div>
+
+        <div class="info-note">
+            <i class="bi bi-info-circle"></i>
+            <span>Double-click or select then click again to proceed</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Registration Screen -->
+<div id="registration_screen" class="screen">
+    <div class="main-container">
+        <header class="app-header">
+            <div class="header-left">
+                <button id="back_to_service_btn" class="back-btn">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Back</span>
+                </button>
+                <div class="logo-small">
+                    <div class="logo-icon-small">
+                        <img src="images/psaa.png" alt="PSA" class="small-logo-img" onerror="this.src='https://placehold.co/36x36/2c5f8a/white?text=PSA'">
+                    </div>
+                    <span class="logo-text-small">Queuing System</span>
+                </div>
+            </div>
+            <div class="mode-indicator">
+                <span class="mode-dot"></span>
+                <span>Live System</span>
+            </div>
+        </header>
+
+        <!-- SEPARATE CURRENTLY SERVING SECTION -->
+        <div class="currently-serving-section">
+            <div class="section-title">
+                <h2><i class="bi bi-megaphone-fill"></i> Currently Serving</h2>
+                <span class="badge bg-primary">Active Counter</span>
+            </div>
+            <div class="serving-card" id="now_serving_card">
+                <div class="serving-number">---</div>
+                <div class="serving-type">No active transaction</div>
+            </div>
+        </div>
+
+        <!-- Dashboard with Registration and Queue -->
+        <div class="dashboard">
+            <!-- Left Panel - Registration Form -->
+            <div class="registration-panel">
+                <div class="service-badge" id="service_type_badge">
+                    <span id="selected_service_label">Regular Service</span>
+                </div>
+
+                <h2>Customer Registration</h2>
+                <p class="form-subtitle">Please fill in the information below</p>
+
+                <form id="registration_form" class="modern-form">
+                    <div class="form-field">
+                        <label>First Name</label>
+                        <input type="text" id="first_name" placeholder="Enter first name" autocomplete="off">
+                    </div>
+
+                    <div class="form-field">
+                        <label>Middle Name (Optional)</label>
+                        <input type="text" id="middle_name" placeholder="Enter middle name" autocomplete="off">
+                    </div>
+
+                    <div class="form-field">
+                        <label>Last Name / Surname</label>
+                        <input type="text" id="last_name" placeholder="Enter last name" autocomplete="off">
+                    </div>
+
+                    <div class="form-field">
+                        <label>Transaction Type</label>
+                        <select id="transaction_type">
+                            <option value="registration">Registration (R)</option>
+                            <option value="update">Update (U)</option>
+                            <option value="paper_form">Paper Form (P)</option>
+                            <option value="inquiry">Inquiry (I)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <i class="bi bi-ticket-perforated"></i>
+                        Get Queue Number
+                    </button>
+                </form>
+
+                <div class="queue-info-card">
+                    <h4>Your Queue Information</h4>
+                    <div class="queue-number-display">
+                        <span class="label">Your Number:</span>
+                        <span class="number" id="current_queue_display">---</span>
+                    </div>
+                    <div class="waiting-info">
+                        <span>People ahead of you:</span>
+                        <strong id="people_ahead">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Queue Display -->
+            <div class="queue-panel">
+                <div class="queue-header">
+                    <h3><i class="bi bi-people-fill"></i> Waiting Queue</h3>
+                    <div class="admin-controls">
+                        <button id="call_next_btn" class="admin-btn call-btn">
+                            <i class="bi bi-megaphone"></i>
+                            Call Next
+                        </button>
+                        <button id="complete_btn" class="admin-btn complete-btn">
+                            <i class="bi bi-check2"></i>
+                            Complete
+                        </button>
+                    </div>
+                </div>
+
+                <div class="queue-list-container">
+                    <div id="queue_list" class="queue-list">
+                        <div class="empty-queue-message">
+                            <i class="bi bi-inbox fs-1"></i>
+                            <p class="mt-2">No customers in queue</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="queue-stats">
+                    <div class="stat">
+                        <span class="stat-label">Total Waiting</span>
+                        <span class="stat-value" id="total_waiting">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Registration (R)</span>
+                        <span class="stat-value" id="registration_count">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Update (U)</span>
+                        <span class="stat-value" id="update_count">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Paper Form (P)</span>
+                        <span class="stat-value" id="paper_count">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Inquiry (I)</span>
+                        <span class="stat-value" id="inquiry_count">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="success_modal" class="modal-custom">
+    <div class="modal-content-custom">
+        <div class="modal-icon">
+            <i class="bi bi-check-lg"></i>
+        </div>
+        <h4 class="mb-2">Queue Number Generated!</h4>
+        <div class="modal-queue-number" id="modal_queue_number">001</div>
+        <p id="modal_message" class="text-muted">Please wait for your turn</p>
+        <button class="modal-btn" id="close_modal_btn">OK</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script>
+class PSAQueueSystem {
+    constructor() {
+        this.queue = [];
+        this.currently_serving = null;
+        this.transaction_counters = {
+            registration: 0,
+            update:       0,
+            paper_form:   0,
+            inquiry:      0
+        };
+        this.selected_service = null;
+        this.init();
+    }
+
+    init() {
+        this.setup_event_listeners();
+        this.load_from_storage();
+        this.update_ui();
+        setInterval(() => this.update_ui(), 1000);
+    }
+
+    setup_event_listeners() {
+        // Single click — select card
+        $('.option-card').on('click', (e) => {
+            $('.option-card').removeClass('selected');
+            const $card = $(e.currentTarget);
+            $card.addClass('selected');
+            this.selected_service = $card.data('service');
+        });
+
+        // Double click — proceed if already selected
+        $('.option-card').on('dblclick', (e) => {
+            const $card = $(e.currentTarget);
+            if ($card.hasClass('selected')) {
+                this.proceed_to_registration();
+            }
+        });
+
+        $('#back_to_service_btn').on('click', () => {
+            this.go_back_to_service();
+        });
+
+        $('#registration_form').on('submit', (e) => {
+            e.preventDefault();
+            this.add_to_queue();
+        });
+
+        $('#call_next_btn').on('click', () => {
+            this.call_next();
+        });
+
+        $('#complete_btn').on('click', () => {
+            this.complete_transaction();
+        });
+
+        $('#close_modal_btn').on('click', () => {
+            this.close_modal();
+        });
+    }
+
+    proceed_to_registration() {
+        if (!this.selected_service) {
+            this.show_notification('Please select a service type first', 'warning');
+            return;
+        }
+
+        $('#service_selection_screen').removeClass('active');
+        $('#registration_screen').addClass('active');
+
+        const service_label = this.selected_service === 'priority' ? 'Priority Service' : 'Regular Service';
+        $('#selected_service_label').text(service_label);
+
+        const bg_color = this.selected_service === 'priority'
+            ? 'rgba(16, 185, 129, 0.1)'
+            : 'rgba(44, 95, 138, 0.1)';
+        $('#service_type_badge').css('background', bg_color);
+    }
+
+    go_back_to_service() {
+        this.selected_service = null;
+        $('#registration_screen').removeClass('active');
+        $('#service_selection_screen').addClass('active');
+        $('#registration_form')[0].reset();
+        $('#current_queue_display').text('---');
+    }
+
+    generate_queue_number(transaction_type) {
+        this.transaction_counters[transaction_type]++;
+
+        let prefix = '';
+        switch (transaction_type) {
+            case 'registration': prefix = 'R'; break;
+            case 'update':       prefix = 'U'; break;
+            case 'paper_form':   prefix = 'P'; break;
+            case 'inquiry':      prefix = 'I'; break;
+            default:             prefix = 'R';
+        }
+
+        const number = String(this.transaction_counters[transaction_type]).padStart(3, '0');
+        return `${prefix}${number}`;
+    }
+
+    get_transaction_prefix(transaction_type) {
+        const prefixes = {
+            'registration': 'R',
+            'update':       'U',
+            'paper_form':   'P',
+            'inquiry':      'I'
+        };
+        return prefixes[transaction_type];
+    }
+
+    get_transaction_label(type) {
+        const labels = {
+            'registration': 'Registration',
+            'update':       'Update',
+            'paper_form':   'Paper Form',
+            'inquiry':      'Inquiry'
+        };
+        return labels[type];
+    }
+
+    add_to_queue() {
+        const first_name       = $('#first_name').val().trim();
+        const middle_name      = $('#middle_name').val().trim();
+        const last_name        = $('#last_name').val().trim();
+        const transaction_type = $('#transaction_type').val();
+
+        if (!first_name || !last_name) {
+            this.show_notification('Please enter first name and last name', 'warning');
+            return;
+        }
+
+        const queue_number = this.generate_queue_number(transaction_type);
+
+        const queue_item = {
+            id:                 Date.now(),
+            queue_number:       queue_number,
+            first_name:         first_name,
+            middle_name:        middle_name,
+            last_name:          last_name,
+            full_name:          `${first_name} ${middle_name} ${last_name}`.trim(),
+            transaction_type:   transaction_type,
+            transaction_label:  this.get_transaction_label(transaction_type),
+            transaction_prefix: this.get_transaction_prefix(transaction_type),
+            service_type:       this.selected_service,
+            timestamp:          new Date(),
+            status:             'waiting'
+        };
+
+        if (this.selected_service === 'priority') {
+            this.queue.unshift(queue_item);
+        } else {
+            this.queue.push(queue_item);
+        }
+
+        this.save_to_storage();
+        this.update_ui();
+        this.show_success_modal(queue_number, queue_item.full_name);
+
+        // Reset only name fields, keep transaction type for next registration
+        $('#first_name').val('');
+        $('#middle_name').val('');
+        $('#last_name').val('');
+
+        $('#current_queue_display').text(queue_number);
+        this.show_notification(`Queue number ${queue_number} generated successfully!`, 'success');
+    }
+
+    call_next() {
+        if (this.currently_serving) {
+            this.show_notification('Please complete current transaction first', 'warning');
+            return;
+        }
+
+        if (this.queue.length === 0) {
+            this.show_notification('No customers in queue', 'warning');
+            return;
+        }
+
+        this.currently_serving               = this.queue.shift();
+        this.currently_serving.status        = 'serving';
+        this.currently_serving.service_start = new Date();
+
+        this.update_ui();
+        this.save_to_storage();
+
+        this.show_notification(`Now serving: ${this.currently_serving.queue_number} - ${this.currently_serving.transaction_label}`, 'success');
+    }
+
+    complete_transaction() {
+        if (!this.currently_serving) {
+            this.show_notification('No active transaction to complete', 'warning');
+            return;
+        }
+
+        this.currently_serving.status      = 'completed';
+        this.currently_serving.service_end = new Date();
+        this.currently_serving             = null;
+
+        this.update_ui();
+        this.save_to_storage();
+
+        this.show_notification('Transaction completed successfully', 'success');
+    }
+
+    update_ui() {
+        if (this.queue.length === 0) {
+            $('#queue_list').html(`
+                <div class="empty-queue-message">
+                    <i class="bi bi-inbox fs-1"></i>
+                    <p class="mt-2">No customers in queue</p>
+                </div>
+            `);
+        } else {
+            const rows = this.queue.map(item => `
+                <div class="queue-item ${item.service_type === 'priority' ? 'priority-queue' : ''}">
+                    <div>
+                        <div class="queue-number">${item.queue_number}</div>
+                        <div class="queue-name">${item.full_name}</div>
+                        <div style="font-size: 11px; color: #4a5568; margin-top: 4px;">${item.transaction_label}</div>
+                    </div>
+                    <div>
+                        <span class="queue-type ${item.service_type}">
+                            ${item.service_type === 'priority' ? 'Priority' : 'Regular'}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+            $('#queue_list').html(rows);
+        }
+
+        if (this.currently_serving) {
+            $('#now_serving_card').html(`
+                <div class="serving-number">${this.currently_serving.queue_number}</div>
+                <div class="serving-type">${this.currently_serving.full_name} - ${this.currently_serving.transaction_label}</div>
+            `);
+        } else {
+            $('#now_serving_card').html(`
+                <div class="serving-number">---</div>
+                <div class="serving-type">No active transaction</div>
+            `);
+        }
+
+        const registration_count = this.queue.filter(item => item.transaction_type === 'registration').length;
+        const update_count       = this.queue.filter(item => item.transaction_type === 'update').length;
+        const paper_count        = this.queue.filter(item => item.transaction_type === 'paper_form').length;
+        const inquiry_count      = this.queue.filter(item => item.transaction_type === 'inquiry').length;
+
+        $('#total_waiting').text(this.queue.length);
+        $('#registration_count').text(registration_count);
+        $('#update_count').text(update_count);
+        $('#paper_count').text(paper_count);
+        $('#inquiry_count').text(inquiry_count);
+        $('#people_ahead').text(this.queue.length);
+    }
+
+    show_success_modal(queue_number, name) {
+        $('#modal_queue_number').text(queue_number);
+        $('#modal_message').text(`Thank you ${name}! Please wait for your turn.`);
+        $('#success_modal').addClass('active');
+
+        setTimeout(() => {
+            $('#success_modal').removeClass('active');
+        }, 3000);
+    }
+
+    close_modal() {
+        $('#success_modal').removeClass('active');
+    }
+
+    show_notification(message, type) {
+        const is_success = type === 'success';
+        const $notification = $('<div>')
+            .addClass(`alert alert-${is_success ? 'success' : 'warning'} position-fixed top-0 end-0 m-3`)
+            .css({
+                zIndex:       1000,
+                minWidth:     '300px',
+                background:   'white',
+                boxShadow:    '0 4px 12px rgba(0,0,0,0.15)',
+                borderRadius: '12px',
+                animation:    'slideInRight 0.3s ease'
+            })
+            .html(`
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-${is_success ? 'check-circle' : 'exclamation-triangle'} fs-5"
+                       style="color: ${is_success ? '#10b981' : '#f59e0b'}"></i>
+                    <span style="color: #1a1a2e;">${message}</span>
+                </div>
+            `);
+
+        $('body').append($notification);
+
+        setTimeout(() => {
+            $notification.css('animation', 'slideOutRight 0.3s ease');
+            setTimeout(() => $notification.remove(), 300);
+        }, 3000);
+    }
+
+    save_to_storage() {
+        const data = {
+            queue:                this.queue,
+            currently_serving:    this.currently_serving,
+            transaction_counters: this.transaction_counters
+        };
+        localStorage.setItem('psa_queue_system', JSON.stringify(data));
+    }
+
+    load_from_storage() {
+        const saved_data = localStorage.getItem('psa_queue_system');
+        if (saved_data) {
+            const data                = JSON.parse(saved_data);
+            this.queue                = data.queue || [];
+            this.currently_serving    = data.currently_serving || null;
+            this.transaction_counters = data.transaction_counters || {
+                registration: 0,
+                update:       0,
+                paper_form:   0,
+                inquiry:      0
+            };
+        }
+    }
+}
+
+$(function() {
+    window.psa_queue = new PSAQueueSystem();
+});
+</script>
+</body>
+</html>
