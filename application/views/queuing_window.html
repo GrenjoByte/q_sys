@@ -39,7 +39,7 @@
         </div>
 
         <div class="options-container">
-            <div class="option-card" data-service="priority">
+            <div class="priority_level" data-service="priority">
                 <div class="option-icon priority-icon">
                     <img src="images/p1.png" alt="Priority" class="option-img" onerror="this.src='https://placehold.co/70x70/10b981/white?text=⭐'">
                 </div>
@@ -48,7 +48,7 @@
                 <span class="badge badge-priority">Priority Lane</span>
             </div>
 
-            <div class="option-card" data-service="regular">
+            <div class="priority_level" data-service="regular">
                 <div class="option-icon regular-icon">
                     <img src="images/p2.png" alt="Regular" class="option-img" onerror="this.src='https://placehold.co/70x70/2c5f8a/white?text=👤'">
                 </div>
@@ -222,96 +222,118 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <script>
-class PSAQueueSystem {
-    constructor() {
-        this.queue = [];
-        this.currently_serving = null;
-        this.transaction_counters = {
-            registration: 0,
-            update:       0,
-            paper_form:   0,
-            inquiry:      0
-        };
-        this.selected_service = null;
-        this.init();
+
+    // ─── State ────────────────────────────────────────────────────────────────
+    var queue                = [];
+    var currently_serving    = null;
+    var transaction_counters = {
+        registration: 0,
+        update:       0,
+        paper_form:   0,
+        inquiry:      0
+    };
+    var selected_service = null;
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
+    function init() {
+        setup_event_listeners();
+        load_from_storage();
+        update_ui();
+        setInterval(update_ui, 1000);
     }
 
-    init() {
-        this.setup_event_listeners();
-        this.load_from_storage();
-        this.update_ui();
-        setInterval(() => this.update_ui(), 1000);
-    }
-
-    setup_event_listeners() {
+    // ─── Event Listeners ──────────────────────────────────────────────────────
+    function setup_event_listeners() {
         // Single click — select card
-        $('.option-card').on('click', (e) => {
-            $('.option-card').removeClass('selected');
-            const $card = $(e.currentTarget);
-            $card.addClass('selected');
-            this.selected_service = $card.data('service');
+        $('.priority_level').on('click', function () {
+            $('.priority_level').removeClass('selected');
+            $(this).addClass('selected');
+            selected_service = $(this).data('service');
         });
 
         // Double click — proceed if already selected
-        $('.option-card').on('dblclick', (e) => {
-            const $card = $(e.currentTarget);
-            if ($card.hasClass('selected')) {
-                this.proceed_to_registration();
+        $('.priority_level').on('dblclick', function () {
+            if ($(this).hasClass('selected')) {
+                proceed_to_registration();
             }
         });
 
-        $('#back_to_service_btn').on('click', () => {
-            this.go_back_to_service();
+        $('#back_to_service_btn').on('click', function () {
+            go_back_to_service();
         });
 
-        $('#registration_form').on('submit', (e) => {
+        $('#registration_form').on('submit', function (e) {
             e.preventDefault();
-            this.add_to_queue();
+            add_to_queue();
         });
 
-        $('#call_next_btn').on('click', () => {
-            this.call_next();
+        $('#call_next_btn').on('click', function () {
+            call_next();
         });
 
-        $('#complete_btn').on('click', () => {
-            this.complete_transaction();
+        $('#complete_btn').on('click', function () {
+            complete_transaction();
         });
 
-        $('#close_modal_btn').on('click', () => {
-            this.close_modal();
+        $('#close_modal_btn').on('click', function () {
+            close_modal();
         });
     }
 
-    proceed_to_registration() {
-        if (!this.selected_service) {
-            this.show_notification('Please select a service type first', 'warning');
+    function insert_transaction_data() {
+        
+        var ajax = $.ajax({
+            method: 'POST',
+            url   : '<?php echo base_url();?>i.php/sys_control/insert_transaction_data',
+            data  : { 
+                supply_log_type:supply_log_type, 
+                supply_log_date:supply_log_date
+            }
+        });
+        var jqxhr = ajax
+        .success(function() {
+            var response_data = JSON.parse(jqxhr.responseText);
+        });
+        .error(function() {
+            
+        });
+        .always(function() {
+        });
+
+    }
+
+    // ─── Navigation ───────────────────────────────────────────────────────────
+    function proceed_to_registration() {
+        if (!selected_service) {
+            show_notification('Please select a service type first', 'warning');
             return;
         }
 
         $('#service_selection_screen').removeClass('active');
         $('#registration_screen').addClass('active');
 
-        const service_label = this.selected_service === 'priority' ? 'Priority Service' : 'Regular Service';
+        var service_label = selected_service === 'priority' ? 'Priority Service' : 'Regular Service';
         $('#selected_service_label').text(service_label);
 
-        const bg_color = this.selected_service === 'priority'
+        var bg_color = selected_service === 'priority'
             ? 'rgba(16, 185, 129, 0.1)'
             : 'rgba(44, 95, 138, 0.1)';
         $('#service_type_badge').css('background', bg_color);
     }
 
-    go_back_to_service() {
-        this.selected_service = null;
+    function go_back_to_service() {
+        selected_service = null;
         $('#registration_screen').removeClass('active');
         $('#service_selection_screen').addClass('active');
         $('#registration_form')[0].reset();
         $('#current_queue_display').text('---');
     }
 
-    generate_queue_number(transaction_type) {
-        this.transaction_counters[transaction_type]++;
+    // ─── Queue Number Generation ───────────────────────────────────────────────
+    function generate_queue_number(transaction_type) {
+        transaction_counters[transaction_type]++;
 
-        let prefix = '';
+        var prefix = '';
         switch (transaction_type) {
             case 'registration': prefix = 'R'; break;
             case 'update':       prefix = 'U'; break;
@@ -320,12 +342,12 @@ class PSAQueueSystem {
             default:             prefix = 'R';
         }
 
-        const number = String(this.transaction_counters[transaction_type]).padStart(3, '0');
-        return `${prefix}${number}`;
+        var number = String(transaction_counters[transaction_type]).padStart(3, '0');
+        return prefix + number;
     }
 
-    get_transaction_prefix(transaction_type) {
-        const prefixes = {
+    function get_transaction_prefix(transaction_type) {
+        var prefixes = {
             'registration': 'R',
             'update':       'U',
             'paper_form':   'P',
@@ -334,8 +356,8 @@ class PSAQueueSystem {
         return prefixes[transaction_type];
     }
 
-    get_transaction_label(type) {
-        const labels = {
+    function get_transaction_label(type) {
+        var labels = {
             'registration': 'Registration',
             'update':       'Update',
             'paper_form':   'Paper Form',
@@ -344,43 +366,44 @@ class PSAQueueSystem {
         return labels[type];
     }
 
-    add_to_queue() {
-        const first_name       = $('#first_name').val().trim();
-        const middle_name      = $('#middle_name').val().trim();
-        const last_name        = $('#last_name').val().trim();
-        const transaction_type = $('#transaction_type').val();
+    // ─── Queue Operations ─────────────────────────────────────────────────────
+    function add_to_queue() {
+        var first_name       = $('#first_name').val().trim();
+        var middle_name      = $('#middle_name').val().trim();
+        var last_name        = $('#last_name').val().trim();
+        var transaction_type = $('#transaction_type').val();
 
         if (!first_name || !last_name) {
-            this.show_notification('Please enter first name and last name', 'warning');
+            show_notification('Please enter first name and last name', 'warning');
             return;
         }
 
-        const queue_number = this.generate_queue_number(transaction_type);
+        var queue_number = generate_queue_number(transaction_type);
 
-        const queue_item = {
+        var queue_item = {
             id:                 Date.now(),
             queue_number:       queue_number,
             first_name:         first_name,
             middle_name:        middle_name,
             last_name:          last_name,
-            full_name:          `${first_name} ${middle_name} ${last_name}`.trim(),
+            full_name:          (first_name + ' ' + middle_name + ' ' + last_name).trim(),
             transaction_type:   transaction_type,
-            transaction_label:  this.get_transaction_label(transaction_type),
-            transaction_prefix: this.get_transaction_prefix(transaction_type),
-            service_type:       this.selected_service,
+            transaction_label:  get_transaction_label(transaction_type),
+            transaction_prefix: get_transaction_prefix(transaction_type),
+            service_type:       selected_service,
             timestamp:          new Date(),
             status:             'waiting'
         };
 
-        if (this.selected_service === 'priority') {
-            this.queue.unshift(queue_item);
+        if (selected_service === 'priority') {
+            queue.unshift(queue_item);
         } else {
-            this.queue.push(queue_item);
+            queue.push(queue_item);
         }
 
-        this.save_to_storage();
-        this.update_ui();
-        this.show_success_modal(queue_number, queue_item.full_name);
+        save_to_storage();
+        update_ui();
+        show_success_modal(queue_number, queue_item.full_name);
 
         // Reset only name fields, keep transaction type for next registration
         $('#first_name').val('');
@@ -388,115 +411,120 @@ class PSAQueueSystem {
         $('#last_name').val('');
 
         $('#current_queue_display').text(queue_number);
-        this.show_notification(`Queue number ${queue_number} generated successfully!`, 'success');
+        show_notification('Queue number ' + queue_number + ' generated successfully!', 'success');
     }
 
-    call_next() {
-        if (this.currently_serving) {
-            this.show_notification('Please complete current transaction first', 'warning');
+    function call_next() {
+        if (currently_serving) {
+            show_notification('Please complete current transaction first', 'warning');
             return;
         }
 
-        if (this.queue.length === 0) {
-            this.show_notification('No customers in queue', 'warning');
+        if (queue.length === 0) {
+            show_notification('No customers in queue', 'warning');
             return;
         }
 
-        this.currently_serving               = this.queue.shift();
-        this.currently_serving.status        = 'serving';
-        this.currently_serving.service_start = new Date();
+        currently_serving               = queue.shift();
+        currently_serving.status        = 'serving';
+        currently_serving.service_start = new Date();
 
-        this.update_ui();
-        this.save_to_storage();
+        update_ui();
+        save_to_storage();
 
-        this.show_notification(`Now serving: ${this.currently_serving.queue_number} - ${this.currently_serving.transaction_label}`, 'success');
+        show_notification('Now serving: ' + currently_serving.queue_number + ' - ' + currently_serving.transaction_label, 'success');
     }
 
-    complete_transaction() {
-        if (!this.currently_serving) {
-            this.show_notification('No active transaction to complete', 'warning');
+    function complete_transaction() {
+        if (!currently_serving) {
+            show_notification('No active transaction to complete', 'warning');
             return;
         }
 
-        this.currently_serving.status      = 'completed';
-        this.currently_serving.service_end = new Date();
-        this.currently_serving             = null;
+        currently_serving.status      = 'completed';
+        currently_serving.service_end = new Date();
+        currently_serving             = null;
 
-        this.update_ui();
-        this.save_to_storage();
+        update_ui();
+        save_to_storage();
 
-        this.show_notification('Transaction completed successfully', 'success');
+        show_notification('Transaction completed successfully', 'success');
     }
 
-    update_ui() {
-        if (this.queue.length === 0) {
-            $('#queue_list').html(`
-                <div class="empty-queue-message">
-                    <i class="bi bi-inbox fs-1"></i>
-                    <p class="mt-2">No customers in queue</p>
-                </div>
-            `);
+    // ─── UI Update ────────────────────────────────────────────────────────────
+    function update_ui() {
+        if (queue.length === 0) {
+            $('#queue_list').html(
+                '<div class="empty-queue-message">' +
+                    '<i class="bi bi-inbox fs-1"></i>' +
+                    '<p class="mt-2">No customers in queue</p>' +
+                '</div>'
+            );
         } else {
-            const rows = this.queue.map(item => `
-                <div class="queue-item ${item.service_type === 'priority' ? 'priority-queue' : ''}">
-                    <div>
-                        <div class="queue-number">${item.queue_number}</div>
-                        <div class="queue-name">${item.full_name}</div>
-                        <div style="font-size: 11px; color: #4a5568; margin-top: 4px;">${item.transaction_label}</div>
-                    </div>
-                    <div>
-                        <span class="queue-type ${item.service_type}">
-                            ${item.service_type === 'priority' ? 'Priority' : 'Regular'}
-                        </span>
-                    </div>
-                </div>
-            `).join('');
+            var rows = queue.map(function (item) {
+                return (
+                    '<div class="queue-item ' + (item.service_type === 'priority' ? 'priority-queue' : '') + '">' +
+                        '<div>' +
+                            '<div class="queue-number">' + item.queue_number + '</div>' +
+                            '<div class="queue-name">' + item.full_name + '</div>' +
+                            '<div style="font-size: 11px; color: #4a5568; margin-top: 4px;">' + item.transaction_label + '</div>' +
+                        '</div>' +
+                        '<div>' +
+                            '<span class="queue-type ' + item.service_type + '">' +
+                                (item.service_type === 'priority' ? 'Priority' : 'Regular') +
+                            '</span>' +
+                        '</div>' +
+                    '</div>'
+                );
+            }).join('');
             $('#queue_list').html(rows);
         }
 
-        if (this.currently_serving) {
-            $('#now_serving_card').html(`
-                <div class="serving-number">${this.currently_serving.queue_number}</div>
-                <div class="serving-type">${this.currently_serving.full_name} - ${this.currently_serving.transaction_label}</div>
-            `);
+        if (currently_serving) {
+            $('#now_serving_card').html(
+                '<div class="serving-number">' + currently_serving.queue_number + '</div>' +
+                '<div class="serving-type">' + currently_serving.full_name + ' - ' + currently_serving.transaction_label + '</div>'
+            );
         } else {
-            $('#now_serving_card').html(`
-                <div class="serving-number">---</div>
-                <div class="serving-type">No active transaction</div>
-            `);
+            $('#now_serving_card').html(
+                '<div class="serving-number">---</div>' +
+                '<div class="serving-type">No active transaction</div>'
+            );
         }
 
-        const registration_count = this.queue.filter(item => item.transaction_type === 'registration').length;
-        const update_count       = this.queue.filter(item => item.transaction_type === 'update').length;
-        const paper_count        = this.queue.filter(item => item.transaction_type === 'paper_form').length;
-        const inquiry_count      = this.queue.filter(item => item.transaction_type === 'inquiry').length;
+        var registration_count = queue.filter(function (item) { return item.transaction_type === 'registration'; }).length;
+        var update_count       = queue.filter(function (item) { return item.transaction_type === 'update'; }).length;
+        var paper_count        = queue.filter(function (item) { return item.transaction_type === 'paper_form'; }).length;
+        var inquiry_count      = queue.filter(function (item) { return item.transaction_type === 'inquiry'; }).length;
 
-        $('#total_waiting').text(this.queue.length);
+        $('#total_waiting').text(queue.length);
         $('#registration_count').text(registration_count);
         $('#update_count').text(update_count);
         $('#paper_count').text(paper_count);
         $('#inquiry_count').text(inquiry_count);
-        $('#people_ahead').text(this.queue.length);
+        $('#people_ahead').text(queue.length);
     }
 
-    show_success_modal(queue_number, name) {
+    // ─── Modal ────────────────────────────────────────────────────────────────
+    function show_success_modal(queue_number, name) {
         $('#modal_queue_number').text(queue_number);
-        $('#modal_message').text(`Thank you ${name}! Please wait for your turn.`);
+        $('#modal_message').text('Thank you ' + name + '! Please wait for your turn.');
         $('#success_modal').addClass('active');
 
-        setTimeout(() => {
+        setTimeout(function () {
             $('#success_modal').removeClass('active');
         }, 3000);
     }
 
-    close_modal() {
+    function close_modal() {
         $('#success_modal').removeClass('active');
     }
 
-    show_notification(message, type) {
-        const is_success = type === 'success';
-        const $notification = $('<div>')
-            .addClass(`alert alert-${is_success ? 'success' : 'warning'} position-fixed top-0 end-0 m-3`)
+    // ─── Notifications ────────────────────────────────────────────────────────
+    function show_notification(message, type) {
+        var is_success = type === 'success';
+        var $notification = $('<div>')
+            .addClass('alert alert-' + (is_success ? 'success' : 'warning') + ' position-fixed top-0 end-0 m-3')
             .css({
                 zIndex:       1000,
                 minWidth:     '300px',
@@ -505,38 +533,39 @@ class PSAQueueSystem {
                 borderRadius: '12px',
                 animation:    'slideInRight 0.3s ease'
             })
-            .html(`
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-${is_success ? 'check-circle' : 'exclamation-triangle'} fs-5"
-                       style="color: ${is_success ? '#10b981' : '#f59e0b'}"></i>
-                    <span style="color: #1a1a2e;">${message}</span>
-                </div>
-            `);
+            .html(
+                '<div class="d-flex align-items-center gap-2">' +
+                    '<i class="bi bi-' + (is_success ? 'check-circle' : 'exclamation-triangle') + ' fs-5"' +
+                       ' style="color: ' + (is_success ? '#10b981' : '#f59e0b') + '"></i>' +
+                    '<span style="color: #1a1a2e;">' + message + '</span>' +
+                '</div>'
+            );
 
         $('body').append($notification);
 
-        setTimeout(() => {
+        setTimeout(function () {
             $notification.css('animation', 'slideOutRight 0.3s ease');
-            setTimeout(() => $notification.remove(), 300);
+            setTimeout(function () { $notification.remove(); }, 300);
         }, 3000);
     }
 
-    save_to_storage() {
-        const data = {
-            queue:                this.queue,
-            currently_serving:    this.currently_serving,
-            transaction_counters: this.transaction_counters
+    // ─── Storage ──────────────────────────────────────────────────────────────
+    function save_to_storage() {
+        var data = {
+            queue:                queue,
+            currently_serving:    currently_serving,
+            transaction_counters: transaction_counters
         };
         localStorage.setItem('psa_queue_system', JSON.stringify(data));
     }
 
-    load_from_storage() {
-        const saved_data = localStorage.getItem('psa_queue_system');
+    function load_from_storage() {
+        var saved_data = localStorage.getItem('psa_queue_system');
         if (saved_data) {
-            const data                = JSON.parse(saved_data);
-            this.queue                = data.queue || [];
-            this.currently_serving    = data.currently_serving || null;
-            this.transaction_counters = data.transaction_counters || {
+            var data             = JSON.parse(saved_data);
+            queue                = data.queue || [];
+            currently_serving    = data.currently_serving || null;
+            transaction_counters = data.transaction_counters || {
                 registration: 0,
                 update:       0,
                 paper_form:   0,
@@ -544,11 +573,12 @@ class PSAQueueSystem {
             };
         }
     }
-}
 
-$(function() {
-    window.psa_queue = new PSAQueueSystem();
-});
+    // ─── Bootstrap ────────────────────────────────────────────────────────────
+    $(function () {
+        init();
+    });
+
 </script>
 </body>
 </html>

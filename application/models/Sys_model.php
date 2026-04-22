@@ -74,27 +74,194 @@ class Sys_model extends CI_Model {
 	    echo json_encode($attempt_response);
 	    exit;
 	}
+
 	public function insert_new_transaction()
 	{
-		$pos_item_name  = $_POST['new_pos_item_name'];
-	    $pos_item_code  = $_POST['new_pos_item_code'];
-	    $pos_item_price = $_POST['new_pos_item_price'];
-	    $pos_item_unit  = $_POST['new_pos_item_unit'];
-	    $pos_item_stock = $_POST['new_pos_item_stock'];
-	    $pos_item_low   = $_POST['new_pos_item_low'];
+		header('Content-Type: application/json');
 
-	    $sql = "INSERT INTO pos_inventory 
-	            (pos_item_name, pos_item_code, pos_item_price, pos_item_unit, pos_item_stock, pos_item_low) 
-	            VALUES (?, ?, ?, ?, ?, ?)";
-	    $insert_query = $this->db->query($sql, array(
-	        $pos_item_name,
-	        $pos_item_code,
-	        $pos_item_price,
-	        $pos_item_unit,
-	        $pos_item_stock,
-	        $pos_item_low
+	    $transaction_class = $_POST['transaction_class'];
+	    $priority_level = $_POST['priority_level'];
+		$transaction_schedule = $_POST['transaction_schedule'];
+
+	    $params = [];
+		$params[] = $transaction_class;
+		$params[] = $priority_level;
+		$params[] = $transaction_schedule;
+		
+		$this->db->trans_start();
+	    $sql = "SELECT 
+	                MAX(transaction_sequence) AS current_sequence
+	            FROM transaction_data
+	            WHERE 
+					transaction_class = ?
+					AND
+					priority_level = ?
+					AND
+					transaction_schedule = ?
+				FOR UPDATE
+	    ";
+	    $query = $this->db->query($sql, $params);
+	    
+		$row = $query->row();
+		$current_sequence = $row->current_sequence ?? 0;
+
+		$transaction_sequence = str_pad($current_sequence + 1, 3, '0', STR_PAD_LEFT);
+
+	    $first_name  = $_POST['first_name'];
+	    $middle_name = $_POST['middle_name'];
+		$last_name = $_POST['last_name'];
+	    $gender  = $_POST['gender'];
+	    $birthdate = $_POST['birthdate'];
+
+	    $sql = "INSERT INTO client_data 
+	            	(first_name, 
+					middle_name, 
+					last_name, 
+					gender, 
+					birthdate)
+	            VALUES (?, ?, ?, ?, ?)";
+	    $this->db->query($sql, array(
+	        $first_name,
+	        $middle_name,
+	        $last_name,
+	        $gender,
+	        $birthdate,
+	        
 	    ));
+		$last_client_id = $this->db->insert_id();
+
+	    $client_data_id = $last_client_id;
+	    $transaction_type = $_POST['transaction_type'];
+
+		$sql = "INSERT INTO transaction_data 
+	            (client_data_id,  
+				transaction_type,
+				transaction_class,
+				transaction_sequence,
+				priority_level,
+				transaction_schedule,
+				transaction_status) 
+	            VALUES (?, ?, ?, ?, ?, ?, ?)";
+	    $this->db->query($sql, array(
+	        $client_data_id,
+	        $transaction_type,
+	        $transaction_class,
+	        $transaction_sequence,
+	        $priority_level,
+	        $transaction_schedule,
+	        0,
+	    ));
+
+		$this->db->trans_complete();
+		if ($this->db->trans_status() === false) {
+        echo json_encode([
+		'success' => 
+		 false, 
+		'message' => 
+		'Transaction failed. Please try again.']);
+    return;
+}
+
+echo json_encode(['success' => true, 'transaction_sequence' => $transaction_sequence]);
 	}
+
+    public function load_current_serving()
+	{
+	    header('Content-Type: application/json');
+		date_default_timezone_set('Asia/Manila');
+
+	    $transaction_class = $_POST['transaction_class'];
+	    $priority_level = $_POST['priority_level'];
+		$current_date = date('Y-m-d');
+
+	    $params = [];
+		$params[] = $transaction_class;
+		$params[] = $priority_level;
+		$params[] = $current_date;
+
+	    $sql = "SELECT 
+	                MIN(transaction_sequence) AS current_sequence
+	            FROM transaction_data
+	            WHERE 
+					transaction_class = ?
+					AND
+					priority_level = ?
+					AND
+					transaction_schedule = ?
+					AND
+					transaction_status = 0
+	    ";
+	    $query = $this->db->query($sql, $params);
+	    
+		$row = $query->row();
+		$current_sequence = $row->current_sequence ?? null;
+
+		if ($current_sequence === null) {
+			echo json_encode([
+				'status' => 'empty',
+				'current_sequence' => null
+			]);
+		}
+		else if	 ($current_sequence !== null) {
+			echo json_encode([
+				'status' => 'success',
+				'current_sequence' => $current_sequence
+			]);
+		}
+		exit;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	public function load_pos_inventory()
 	{
 	    $page  = isset($_POST['page']) ? (int)$_POST['page'] : 1;
