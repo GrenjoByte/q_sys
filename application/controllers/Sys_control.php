@@ -49,8 +49,14 @@ class Sys_control extends CI_Controller
 	{
 		$this->load->view('queuing.html');	
 	}
-	
-  
+	public function appointment()
+	{
+		$this->load->view('appointment.html');	
+	}
+  	public function admin()
+	{
+		$this->load->view('admin.html');	
+	}
 
 
 
