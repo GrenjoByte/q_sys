@@ -280,28 +280,74 @@
         });
     }
 
-    function insert_transaction_data() {
+    function insert_new_transaction() {
+        const transaction_class = $("#transaction_class").val();
+        const priority_level = $("#priority_level").val();
+        const transaction_schedule = $("#transaction_schedule").val();
+        const first_name = $("#first_name").val();
+        const middle_name = $("#middle_name").val();
+        const last_name = $("#last_name").val();
+        const gender = $("#gender").val();
+        const birthdate = $("#birthdate").val();
+        const transaction_type = $("#transaction_type").val();
         
         var ajax = $.ajax({
             method: 'POST',
-            url   : '<?php echo base_url();?>i.php/sys_control/insert_transaction_data',
+            url   : '<?php echo base_url();?>i.php/sys_control/insert_new_transaction',
             data  : { 
-                supply_log_type:supply_log_type, 
-                supply_log_date:supply_log_date
-            }
+                transaction_class:transaction_class,
+                priority_level:priority_level,
+                transaction_schedule:transaction_schedule,
+                first_name:first_name,
+                middle_name:middle_name,
+                last_name:last_name,
+                gender:gender,
+                birthdate:birthdate,
+                transaction_type:transaction_type
+            },
+            dataType: 'json',
         });
         var jqxhr = ajax
-        .success(function() {
-            var response_data = JSON.parse(jqxhr.responseText);
-        });
-        .error(function() {
-            
-        });
-        .always(function() {
-        });
+        .success(function(response) {
+            const status = response.status;
 
+            if (status === 'success') {
+                show_notification('Transaction added successfully', 'success');
+                $('#registration_form')[0].reset();
+            } else {
+                show_notification('Failed to add transaction, please try again', 'warning');
+            }
+        })
+        .error(function() {
+            show_notification('Failed to add transaction, please try again', 'warning');
+        })
+        .always(function() {
+        })
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
     // ─── Navigation ───────────────────────────────────────────────────────────
     function proceed_to_registration() {
         if (!selected_service) {

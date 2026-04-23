@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    background: linear-gradient(135deg, #e8f0f8 0%, #dce5ef 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+@font-face {
+    font-family: 'Trajan Pro';
+    src: url('https://db.onlinewebfonts.com/t/105007d9e2c6f0acacf0a3c6b06f3d15.eot');
+    src: url('https://db.onlinewebfonts.com/t/105007d9e2c6f0acacf0a3c6b06f3d15.eot?#iefix') format('embedded-opentype'),
+         url('https://db.onlinewebfonts.com/t/105007d9e2c6f0acacf0a3c6b06f3d15.woff2') format('woff2'),
+         url('https://db.onlinewebfonts.com/t/105007d9e2c6f0acacf0a3c6b06f3d15.woff') format('woff'),
+         url('https://db.onlinewebfonts.com/t/105007d9e2c6f0acacf0a3c6b06f3d15.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.blue-header {
+    background: linear-gradient(135deg, #003366 0%, #1a4d80 100%);
+    padding: 1.2rem 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.2rem;
+    padding-left: 0;
+}
+
+.official-text {
+    text-align: left;
+    font-family: 'Trajan Pro', 'Times New Roman', serif;
+}
+
+.official-line1 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #ffffff;
+    font-family: 'Trajan Pro', 'Times New Roman', serif;
+}
+
+.official-line2 {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1.3;
+    letter-spacing: -0.2px;
+    font-family: 'Trajan Pro', 'Times New Roman', serif;
+}
+
+.official-line3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f3f1eb;
+    margin-top: 2px;
+    font-family: 'Trajan Pro', 'Times New Roman', serif;
+}
+
+.official-logo {
+    width: 90px;
+    height: 90px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 10px;
+}
+
+.logo-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.main-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+}
+
+.login-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-card {
+    max-width: 460px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 1.8rem;
+    box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 25px 45px -14px rgba(0, 0, 0, 0.2);
+}
+
+.card-body-custom {
+    padding: 2rem 2rem 2.5rem 2rem;
+}
+
+.signin-header {
+    text-align: center;
+    margin-bottom: 1.8rem;
+}
+
+.signin-title {
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #1a2c3e;
+    margin-bottom: 0;
+}
+
+.form-group-custom {
+    margin-bottom: 1.5rem;
+}
+
+.form-label-custom {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: #2d3a4b;
+    display: block;
+}
+
+.input-group-custom {
+    border-radius: 14px;
+    transition: all 0.2s ease;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+}
+
+.input-group-custom:focus-within {
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    background-color: #ffffff;
+}
+
+.input-icon {
+    padding: 0 0 0 1rem;
+    color: #6c7a91;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.input-clean {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 450;
+    border: none;
+    background-color: transparent;
+    font-family: inherit;
+    outline: none;
+}
+
+.input-clean:focus {
+    outline: none;
+}
+
+.btn-signin {
+    background: #1a73e8;
+    border: none;
+    padding: 0.9rem 0;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 40px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(26, 115, 232, 0.25);
+    color: white;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 0.5rem;
+}
+
+.btn-signin:hover {
+    background: #0f62d0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(26, 115, 232, 0.3);
+}
+
+.btn-signin:active {
+    transform: translateY(1px);
+}
+
+@media (max-width: 768px) {
+    .blue-header {
+        padding: 1rem 1.5rem;
+    }
+    
+    .header-content {
+        padding-left: 0;
+    }
+    
+    .official-logo {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .official-line2 {
+        font-size: 0.8rem;
+    }
+    
+    .official-line3 {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .blue-header {
+        padding: 0.8rem 1rem;
+    }
+    
+    .header-content {
+        gap: 0.8rem;
+        padding-left: 0;
+    }
+    
+    .official-logo {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .official-line1 {
+        font-size: 0.6rem;
+    }
+    
+    .official-line2 {
+        font-size: 0.7rem;
+    }
+    
+    .official-line3 {
+        font-size: 0.65rem;
+    }
+    
+    .card-body-custom {
+        padding: 1.5rem 1.5rem 2rem 1.5rem;
+    }
+    
+    .signin-title {
+        font-size: 1.7rem;
+    }
+    
+    .input-clean {
+        padding: 0.75rem 0.9rem 0.75rem 0.5rem;
+    }
+    
+    .input-icon {
+        padding: 0 0 0 0.8rem;
+    }
+    
+    .btn-signin {
+        padding: 0.8rem 0;
+        font-size: 0.95rem;
+    }
+}
+
+.btn-signin:focus-visible,
+.input-clean:focus-visible {
+    outline: 2px solid #1a73e8;
+    outline-offset: 3px;
+}

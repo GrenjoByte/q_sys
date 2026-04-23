@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Sign In · PSA Samar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="blue-header">
+        <div class="header-content">
+            <div class="official-logo">
+                <img src="images/logopsa.webp" alt="PSA Logo" class="logo-img">
+            </div>
+            <div class="official-text">
+                <div class="official-line1">REPUBLIC OF THE PHILIPPINES</div>
+                <div class="official-line2">PHILIPPINE STATISTICS AUTHORITY</div>
+                <div class="official-line3">SAMAR</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="card-body-custom">
+                    <div class="signin-header">
+                        <h1 class="signin-title">Sign In</h1>
+                    </div>
+
+                    <form id="loginForm" action="#" method="post">
+                        <div class="form-group-custom">
+                            <label for="username" class="form-label-custom">Username</label>
+                            <div class="input-group-custom">
+                                <span class="input-icon"><i class="bi bi-person-fill"></i></span>
+                                <input type="text" class="input-clean" id="username" name="username" placeholder="Enter your username" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group-custom">
+                            <label for="password" class="form-label-custom">Password</label>
+                            <div class="input-group-custom">
+                                <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
+                                <input type="password" class="input-clean" id="password" name="password" placeholder="Enter your password" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-signin">Sign In</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

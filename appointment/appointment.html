@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSA Queuing System | Philippine Statistics Authority</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="appointment.css">
+</head>
+<body>
+
+<div class="bg-overlay"></div>
+
+<!-- ==================== DATA PRIVACY MODAL ==================== -->
+<div id="privacyModal" class="modal-custom">
+    <div class="privacy-modal-content">
+        <div class="privacy-header">
+            <div class="privacy-icon"><i class="bi bi-shield-lock-fill"></i></div>
+            <h2>DATA PRIVACY NOTICE</h2>
+            <h3>PHILIPPINE STATISTICS AUTHORITY</h3>
+        </div>
+        <div class="privacy-body">
+            <div class="privacy-badge"><i class="bi bi-id-card"></i><span>National ID </span></span></div>
+            <p class="privacy-intro">This system collects and processes limited personal information solely for the purpose of scheduling, managing, and confirming National ID System appointments, in accordance with the <strong>Data Privacy Act of 2012 (RA 10173)</strong>.</p>
+            <div class="privacy-list">
+                <div class="privacy-item"><i class="bi bi-database"></i><div><strong>Collected Data:</strong><br><small>Full name, contact info, and selected schedule.</small></div></div>
+                <div class="privacy-item"><i class="bi bi-bullseye"></i><div><strong>Purpose:</strong><br><small>Exclusively for appointment management.</small></div></div>
+                <div class="privacy-item"><i class="bi bi-shield-check"></i><div><strong>Protection:</strong><br><small>Stored with high-level administrative safeguards.</small></div></div>
+            </div>
+            <p class="privacy-footer">By proceeding, you confirm that you have read, understood, and voluntarily consent to the collection and processing of your personal data for the stated purpose.</p>
+        </div>
+        <div class="privacy-footer-btn"><button id="agreeBtn" class="agree-btn"><i class="bi bi-check-circle"></i> I UNDERSTAND AND AGREE</button></div>
+    </div>
+</div>
+
+<!-- ==================== SUCCESS MODAL ==================== -->
+<div id="successModal" class="modal-custom">
+    <div class="modal-content success-modal-content">
+        <div class="modal-icon success-icon"><i class="bi bi-check-circle-fill"></i></div>
+        <h3 class="modal-title">Queue Number Generated</h3>
+        <p class="modal-message" id="modalMessage">Thank you! Please save your queue number.</p>
+        <div class="modal-queue-number" id="modalQueueNumber">---</div>
+        <div class="modal-queue-type" id="modalQueueType"></div>
+        <button class="modal-btn success-modal-btn" id="continueBtn">Continue</button>
+    </div>
+</div>
+
+<!-- ==================== CONFIRMATION MODAL ==================== -->
+<div id="confirmationModal" class="modal-custom">
+    <div class="modal-content confirmation-modal-content">
+        <div class="modal-icon confirmation-icon"><i class="bi bi-question-circle-fill"></i></div>
+        <h3 class="modal-title">Confirm Action</h3>
+        <p class="modal-message">Are you sure you want to proceed with this transaction?</p>
+        <div class="queue-number-preview"><span class="preview-label">Your Queue Number</span><span class="preview-number" id="previewQueueNumber">---</span></div>
+        <div class="confirmation-buttons">
+            <button class="modal-btn confirm-action-btn" id="confirmProceedBtn">Yes, I'm Sure</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== REQUIREMENTS MODAL ==================== -->
+<div id="requirementsModal" class="modal-custom">
+    <div class="requirements-modal-content">
+        <div class="requirements-header">
+            <i class="bi bi-file-text-fill"></i>
+            <h3>Document Requirements</h3>
+            <button class="requirements-close" id="closeRequirementsBtn">&times;</button>
+        </div>
+        <div class="requirements-body" id="requirementsBody">
+            <!-- Dynamic content loaded via JavaScript -->
+        </div>
+        <div class="requirements-footer">
+            <button id="understandBtn" class="understand-btn"><i class="bi bi-check2-circle"></i> I Have Read and Understand the Requirements</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE 1: SERVICE SELECTION SCREEN ==================== -->
+<div id="serviceSelectionScreen" class="screen active">
+    <div class="landing-container">
+        <div class="psa-header">
+            <div class="psa-logo"><img src="images/logopsa.webp" alt="PSA Logo" class="psa-logo-img" onerror="this.src='https://placehold.co/80x80/2c5f8a/white?text=PSA'"></div>
+            <h1>REPUBLIC OF THE PHILIPPINES</h1>
+            <h2>Philippine Statistics Authority</h2>
+            <h1 class="samar-text">Samar</h1>
+            <h2>National ID</h2>
+        </div>
+        <div class="description-card">
+            <div class="description-icon"><i class="bi bi-info-circle-fill"></i></div>
+            <h2>Choose Your Service Type</h2>
+            <p class="description-text">To help us provide appropriate assistance and a smoother experience, you may choose your service type below. Priority service is available for individuals who may need additional support, such as senior citizens, persons with disabilities (PWD), pregnant individuals, or others who qualify.</p>
+        </div>
+        <div class="options-container">
+            <div class="option-card" data-service="priority">
+                <div class="option-icon priority-icon">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <h3>Priority Service</h3>
+                <p>For senior citizens, PWDs, pregnant women, and individuals needing special assistance</p>
+                <span class="badge badge-priority">Priority Lane</span>
+            </div>
+            <div class="option-card" data-service="regular">
+                <div class="option-icon regular-icon"><i class="bi bi-person"></i></div>
+                <h3>Regular Service</h3>
+                <p>Standard queue for general civil registration transactions and services</p>
+                <span class="badge badge-regular">Regular Lane</span>
+            </div>
+        </div>
+        <div class="info-note"><i class="bi bi-info-circle"></i><span>Click any option to proceed</span></div>
+    </div>
+</div>
+
+<!-- ==================== PAGE 2: PERSONAL INFORMATION SCREEN ==================== -->
+<div id="personalInfoScreen" class="screen">
+    <div class="page-container">
+        <header class="page-header">
+            <div class="page-logo"><img src="images/logopsa.webp" alt="PSA" class="small-logo-img"><span>Appointment System</span></div>
+            <div class="step-indicator"><div class="step active">1</div><div class="step-line"></div><div class="step">2</div><div class="step-line"></div><div class="step">3</div></div>
+        </header>
+        <div class="form-container">
+            <div class="form-header"><div class="service-badge" id="serviceTypeBadge"><span id="selectedServiceLabel">Regular Service</span></div><h2>Personal Information</h2><p>Please provide your personal details as they appear on your official documents.</p></div>
+            <form id="personalForm">
+                <div class="form-section">
+                    <h3><i class="bi bi-person-badge"></i> PERSONAL INFORMATION</h3>
+                    <div class="form-group"><label>REGISTRANT FULL NAME</label><div class="name-fields"><input type="text" id="first_name" placeholder="First Name" required><input type="text" id="middle_name" placeholder="Middle Name"><input type="text" id="last_name" placeholder="Last Name" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>GENDER</label><select id="gender" required><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div><div class="form-group"><label>BIRTHDATE</label><input type="date" id="birthdate" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>MOBILE NUMBER <span class="optional">(Optional)</span></label><input type="tel" id="mobile_number" placeholder="09XXXXXXXXX"></div><div class="form-group"><label>EMAIL ADDRESS <span class="optional">(Optional)</span></label><input type="email" id="email_address" placeholder="email@example.com"></div></div>
+                </div>
+                <div class="form-navigation"><button type="button" class="nav-btn back-btn" id="backToServiceBtn"><i class="bi bi-arrow-left"></i> Back</button><button type="submit" class="nav-btn next-btn">Next: Service Details <i class="bi bi-arrow-right"></i></button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE 3: SERVICE DETAILS SCREEN ==================== -->
+<div id="serviceDetailsScreen" class="screen">
+    <div class="page-container">
+        <header class="page-header">
+            <div class="page-logo"><img src="images/logopsa.webp" alt="PSA" class="small-logo-img"><span>Appointment System</span></div>
+            <div class="step-indicator"><div class="step completed">✓</div><div class="step-line"></div><div class="step active">2</div><div class="step-line"></div><div class="step">3</div></div>
+        </header>
+        <div class="form-container">
+            <div class="form-header"><div class="service-badge" id="serviceTypeBadge2"><span id="selectedServiceLabel2">Regular Service</span></div><h2>Transaction Details</h2><p>Please select your transaction type and preferred date.</p></div>
+            <form id="serviceForm">
+                <div class="form-section">
+                    <h3><i class="bi bi-geo-alt-fill"></i> PSA SAMAR</h3>
+                    <p class="text-secondary small mb-3">Catbalogan City, Samar</p>
+                    
+                    <div class="form-group">
+                        <label>SELECT SERVICE</label>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <select id="transaction_type" class="form-control flex-grow-1" required>
+                                <option value="registration">Registration (R)</option>
+                                <option value="update">Updating/Correction (U)</option>
+                                <option value="paper_form">Paper Form (P)</option>
+                                <option value="inquiry">Inquiry (I)</option>
+                            </select>
+                            <button type="button" id="viewRequirementsBtn" class="btn-view-requirements">
+                                <i class="bi bi-eye"></i> View Requirements
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mt-3">
+                        <label>PREFERRED SCHEDULE</label>
+                        <input type="date" id="preferred_date" class="form-control" required>
+                        <small class="text-muted">Please select your preferred appointment date </small>
+                    </div>
+                </div>
+                <div class="form-navigation"><button type="button" class="nav-btn back-btn" id="backToPersonalBtn"><i class="bi bi-arrow-left"></i> Back</button><button type="submit" class="nav-btn next-btn">Confirm & Get Queue <i class="bi bi-check-lg"></i></button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== PAGE 4: QUEUE STATUS SCREEN ==================== -->
+<div id="queueStatusScreen" class="screen">
+    <div class="page-container">
+        <header class="page-header">
+            <div class="page-logo"><img src="images/logopsa.webp" alt="PSA" class="small-logo-img"><span>Queue Status</span></div>
+            <div class="mode-indicator"><span class="mode-dot"></span><span>Live</span></div>
+        </header>
+        <div class="status-wrapper">
+            <div class="currently-serving-card"><div class="currently-serving-header"><i class="bi bi-megaphone-fill"></i><h2>Currently Serving</h2></div><div class="serving-display" id="currentlyServing"><div class="serving-number">---</div><div class="serving-name">No active transaction</div><div class="serving-type"></div></div></div>
+            <div class="queue-card"><div class="queue-header"><h3><i class="bi bi-people-fill"></i> Waiting Queue</h3><span class="queue-badge" id="queueCount">0</span></div><div class="queue-list-container"><div id="queueList" class="queue-list"><div class="empty-message"><i class="bi bi-inbox"></i><p>No customers in queue</p></div></div></div></div>
+            <div class="stats-grid"><div class="stat-card"><div class="stat-icon bg-primary"><i class="bi bi-people"></i></div><div><span class="stat-label">Total Waiting</span><span class="stat-number" id="totalWaiting">0</span></div></div><div class="stat-card"><div class="stat-icon bg-walkin"><i class="bi bi-person-walking"></i></div><div><span class="stat-label">Walk-in</span><span class="stat-number" id="walkinCount">0</span></div></div></div>
+            <div class="your-info" id="yourInfo" style="display: none;"><div class="info-card"><i class="bi bi-ticket-perforated"></i><div><span>Your Queue Number</span><strong id="yourQueueNumber">---</strong></div></div><div class="info-card"><i class="bi bi-person-arms-up"></i><div><span>People Ahead of You</span><strong id="peopleAhead">0</strong></div></div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+// ==================== GLOBAL VARIABLES ====================
+let queue = [];
+let currentlyServing = null;
+let transactionCounters = { registration: 0, update: 0, paper_form: 0, inquiry: 0 };
+let selectedService = null;
+let currentQueueNumber = null;
+let pendingQueueData = null;
+let currentQueueData = null;
+
+// ==================== HELPER FUNCTIONS ====================
+function loadFromStorage() {
+    const savedData = localStorage.getItem('psaQueueSystem');
+    if (savedData) { const data = JSON.parse(savedData); queue = data.queue || []; currentlyServing = data.currentlyServing || null; }
+    const savedCounters = localStorage.getItem('psaCounters');
+    if (savedCounters) { transactionCounters = JSON.parse(savedCounters); }
+}
+
+function saveToStorage() {
+    localStorage.setItem('psaQueueSystem', JSON.stringify({ queue, currentlyServing }));
+    localStorage.setItem('psaCounters', JSON.stringify(transactionCounters));
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.position = 'fixed'; notification.style.top = '20px'; notification.style.right = '20px';
+    notification.style.zIndex = '1000'; notification.style.background = 'white'; notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    notification.style.borderRadius = '12px'; notification.style.padding = '12px 20px';
+    notification.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;"><i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}" style="color: ${type === 'success' ? '#10b981' : '#f59e0b'}"></i><span>${message}</span></div>`;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// ==================== DATE PICKER HELPER ====================
+function setDatePickerMin() {
+    const datePicker = document.getElementById('preferred_date');
+    if (datePicker) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        datePicker.min = `${yyyy}-${mm}-${dd}`;
+    }
+}
+
+// ==================== SCREEN NAVIGATION ====================
+function showScreen(screenId) {
+    const screens = ['serviceSelectionScreen', 'personalInfoScreen', 'serviceDetailsScreen', 'queueStatusScreen'];
+    screens.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+    document.getElementById(screenId).classList.add('active');
+}
+
+// ==================== MODAL FUNCTIONS ====================
+function showSuccessModal(queueNumber, fullName, transactionLabel, typePrefix) {
+    document.getElementById('modalMessage').textContent = `Thank you ${fullName || 'Customer'}! Please save your queue number.`;
+    document.getElementById('modalQueueNumber').textContent = queueNumber;
+    document.getElementById('modalQueueType').textContent = `${transactionLabel} (${typePrefix})`;
+    currentQueueData = { queueNumber, fullName, transactionLabel, typePrefix };
+    document.getElementById('successModal').classList.add('active');
+}
+function hideSuccessModal() { document.getElementById('successModal').classList.remove('active'); }
+function showConfirmationModal() { 
+    document.getElementById('previewQueueNumber').textContent = currentQueueData?.queueNumber || '---'; 
+    document.getElementById('confirmationModal').classList.add('active'); 
+}
+function hideConfirmationModal() { document.getElementById('confirmationModal').classList.remove('active'); }
+
+// ==================== REQUIREMENTS DATA ====================
+const requirementsData = {
+    registration: `
+        <div class="req-section">
+            <h3 class="req-main-title"><i class="bi bi-id-card"></i> NATIONAL ID REGISTRATION REQUIREMENTS</h3>
+            
+            <div class="age-group">
+                <h4><i class="bi bi-1-circle-fill"></i> 1-4 years old</h4>
+                <ul>
+                    <li><i class="bi bi-check2-circle"></i> Certificate of Live Birth (PSA/NSO/LCR copy)</li>
+                    <li><i class="bi bi-check2-circle"></i> National ID (PVC/Paper Form/Digital version) of Parents or Guardian</li>
+                </ul>
+            </div>
+            
+            <div class="age-group">
+                <h4><i class="bi bi-2-circle-fill"></i> 5-17 years old</h4>
+                <p class="req-note-text">Present at least 1 or 2 documents of the following requirements:</p>
+                <ul>
+                    <li><i class="bi bi-check2-circle"></i> Certificate of Live Birth (PSA/NSO/LCR copy)</li>
+                    <li><i class="bi bi-check2-circle"></i> School ID</li>
+                    <li><i class="bi bi-check2-circle"></i> If PSA, NSO, and LCR Live Birth are unavailable, present Brgy. Certification with 2x2 ID picture.</li>
+                </ul>
+            </div>
+            
+            <div class="age-group">
+                <h4><i class="bi bi-3-circle-fill"></i> 18 above</h4>
+                <p class="req-note-text">Present at least 1 or 2 documents of the following requirements:</p>
+                <div class="two-columns">
+                    <ul>
+                        <li><i class="bi bi-check2-circle"></i> Passport</li>
+                        <li><i class="bi bi-check2-circle"></i> Driver's License</li>
+                        <li><i class="bi bi-check2-circle"></i> UMID ID</li>
+                        <li><i class="bi bi-check2-circle"></i> PRC ID</li>
+                        <li><i class="bi bi-check2-circle"></i> Voter's ID/Voter's Certificate</li>
+                        <li><i class="bi bi-check2-circle"></i> PhilHealth ID</li>
+                        <li><i class="bi bi-check2-circle"></i> TIN ID</li>
+                        <li><i class="bi bi-check2-circle"></i> Postal ID</li>
+                    </ul>
+                    <ul>
+                        <li><i class="bi bi-check2-circle"></i> Old SSS ID</li>
+                        <li><i class="bi bi-check2-circle"></i> NBI Clearance</li>
+                        <li><i class="bi bi-check2-circle"></i> Police Clearance</li>
+                        <li><i class="bi bi-check2-circle"></i> Certificate of Live Birth (PSA/NSO/LCR copy)</li>
+                        <li><i class="bi bi-check2-circle"></i> Certificate of Marriage (if married)</li>
+                        <li><i class="bi bi-check2-circle"></i> 4P's ID</li>
+                        <li><i class="bi bi-check2-circle"></i> Solo Parent ID</li>
+                        <li><i class="bi bi-check2-circle"></i> PWD ID</li>
+                    </ul>
+                </div>
+                <div class="additional-ids">
+                    <ul>
+                        <li><i class="bi bi-check2-circle"></i> Employee ID</li>
+                        <li><i class="bi bi-check2-circle"></i> Brgy. ID</li>
+                    </ul>
+                </div>
+                <div class="brgy-note">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <strong>Brgy Certification with 2x2 ID picture</strong> must have the following information:
+                    <ul>
+                        <li>Complete Name which Middle Name must be spelled out</li>
+                        <li>Date of Birth</li>
+                        <li>Place of Birth</li>
+                        <li>Must have the requester's and Brgy. Captain signatures</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `,
+    update: `
+        <div class="req-section">
+            <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Update Notice:</strong> Bring the ORIGINAL COPIES of documents matching the field you wish to change.</div>
+            <table class="req-table">
+                <thead><tr><th>FIELD TO BE CHANGED</th><th>REQUIRED SUPPORTING DOCUMENT</th></tr></thead>
+                <tbody>
+                    <tr><td>Name / Sex / DOB / POB</td><td>Birth Certificate (PSA/NSO/LCRO)</td></tr>
+                    <tr><td>Last Name (Widowed)</td><td>Death Certificate of Spouse</td></tr>
+                    <tr><td>Blood Type</td><td>Official Blood Typing Result</td></tr>
+                    <tr><td>Address</td><td>Barangay Cert or Proof of Billing</td></tr>
+                    <tr><td>Marital Status</td><td>Marriage/Death/Annulment docs</td></tr>
+                </tbody>
+            </table>
+            <div class="req-note"><i class="bi bi-info-circle"></i> You must present your Transaction Slip or Reference Number.</div>
+        </div>
+    `,
+    paper_form: `
+        <div class="req-section">
+            <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Note:</strong> You must present your Transaction Slip or Reference Number.</div>
+            <h4><i class="bi bi-person-badge"></i> REPRESENTATIVE</h4>
+            <ul><li><i class="bi bi-check2-circle"></i> Signed Authorization Letter</li><li><i class="bi bi-check2-circle"></i> Valid Gov ID of Representative</li><li><i class="bi bi-check2-circle"></i> Copy of Valid ID of Registrant</li></ul>
+            <h4><i class="bi bi-person-arms-up"></i> FOR MINORS</h4>
+            <ul><li><i class="bi bi-check2-circle"></i> Birth Certificate of Minor</li><li><i class="bi bi-check2-circle"></i> Valid ID of Parent/Guardian</li><li><i class="bi bi-check2-circle"></i> Guardianship Proof (if applicable)</li></ul>
+            <div class="req-warning mt-3"><i class="bi bi-exclamation-triangle-fill"></i> Failure to present these documents may result in rescheduling.</div>
+        </div>
+    `,
+    inquiry: `
+        <div class="req-section">
+            <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Important Notice:</strong> Please bring your Transaction Slip or Reference Number for faster processing.</div>
+            
+            <h4><i class="bi bi-file-text"></i> TRANSACTION SLIP / REFERENCE NUMBER</h4>
+            <ul>
+                <li><i class="bi bi-check2-circle"></i> Original Transaction Slip (if available)</li>
+                <li><i class="bi bi-check2-circle"></i> Reference Number from previous appointment</li>
+                <li><i class="bi bi-check2-circle"></i> Any valid ID for verification purposes</li>
+            </ul>
+            
+            <div class="req-warning mt-3"><i class="bi bi-exclamation-triangle-fill"></i><strong>Pahabol:</strong> Mangyaring dalhin ang mga original documents. Hindi tatanggapin ang mga photocopy.</div>
+            
+            <h4><i class="bi bi-star-fill"></i> PRIMARY SUPPORTING DOCUMENTS</h4>
+            <p>The registrant is encouraged to bring any of the following:</p>
+            <ul class="req-checklist">
+                <li><i class="bi bi-square"></i> PSA-issued Birth Certificate <strong>AND</strong> one (1) gov-issued ID</li>
+                <li><i class="bi bi-square"></i> Philippine Passport or ePassport (DFA)</li>
+                <li><i class="bi bi-square"></i> UMID Card (GSIS or SSS)</li>
+                <li><i class="bi bi-square"></i> Student's License Permit or Driver's License (LTO)</li>
+            </ul>
+            
+            <h4><i class="bi bi-files"></i> SECONDARY SUPPORTING DOCUMENTS</h4>
+            <p>If Primary IDs are unavailable, present these (must have photo, DOB, and signature):</p>
+            <div class="row">
+                <div class="col-md-6"><ul><li><i class="bi bi-square"></i> PSA/NSO Birth Cert (with BreN)</li><li><i class="bi bi-square"></i> LCRO-issued Birth Certificate</li><li><i class="bi bi-square"></i> PRC ID / IBP ID / Seaman's Book</li><li><i class="bi bi-square"></i> OWWA ID / Senior Citizen ID</li><li><i class="bi bi-square"></i> SSS ID / PhilHealth ID / TIN ID</li><li><i class="bi bi-square"></i> NBI / Police Clearance</li></ul></div>
+                <div class="col-md-6"><ul><li><i class="bi bi-square"></i> Voter's ID / Postal ID / 4Ps ID</li><li><i class="bi bi-square"></i> Solo Parent ID / PWD ID</li><li><i class="bi bi-square"></i> Employee ID / School ID</li><li><i class="bi bi-square"></i> Barangay ID / Clearance</li><li><i class="bi bi-square"></i> Voter's Certification (COMELEC)</li><li><i class="bi bi-square"></i> CSC Eligibility / MARINA ID</li></ul></div>
+            </div>
+            <div class="req-note mt-3"><i class="bi bi-exclamation-circle"></i> ❗ Bring appropriate documents to avoid rescheduling.</div>
+        </div>
+    `
+};
+
+function showRequirementsModal(transactionType) {
+    const modal = document.getElementById('requirementsModal');
+    const body = document.getElementById('requirementsBody');
+    let content = requirementsData[transactionType] || requirementsData.registration;
+    body.innerHTML = content;
+    modal.classList.add('active');
+}
+
+function hideRequirementsModal() {
+    document.getElementById('requirementsModal').classList.remove('active');
+}
+
+// ==================== PRIVACY MODAL ====================
+function initPrivacyModal() {
+    const privacyModal = document.getElementById('privacyModal');
+    const agreeBtn = document.getElementById('agreeBtn');
+    if (privacyModal) privacyModal.classList.add('active');
+    if (agreeBtn) { agreeBtn.addEventListener('click', () => { if (privacyModal) privacyModal.classList.remove('active'); }); }
+}
+
+// ==================== PAGE 1: SERVICE SELECTION ====================
+function initServiceSelection() {
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.addEventListener('click', () => {
+            selectedService = card.getAttribute('data-service');
+            sessionStorage.setItem('serviceType', selectedService);
+            document.querySelectorAll('#selectedServiceLabel, #selectedServiceLabel2').forEach(s => s.textContent = selectedService === 'priority' ? 'Priority Service' : 'Regular Service');
+            document.querySelectorAll('#serviceTypeBadge, #serviceTypeBadge2').forEach(b => b.style.background = selectedService === 'priority' ? 'rgba(16,185,129,0.1)' : 'rgba(44,95,138,0.1)');
+            showScreen('personalInfoScreen');
+        });
+    });
+}
+
+// ==================== PAGE 2: PERSONAL INFORMATION ====================
+function initPersonalInfo() {
+    document.getElementById('backToServiceBtn')?.addEventListener('click', () => showScreen('serviceSelectionScreen'));
+    
+    const savedData = sessionStorage.getItem('personalData');
+    if (savedData) { const data = JSON.parse(savedData);
+        document.getElementById('first_name').value = data.first_name || '';
+        document.getElementById('middle_name').value = data.middle_name || '';
+        document.getElementById('last_name').value = data.last_name || '';
+        document.getElementById('gender').value = data.gender || '';
+        document.getElementById('birthdate').value = data.birthdate || '';
+        document.getElementById('mobile_number').value = data.mobile_number || '';
+        document.getElementById('email_address').value = data.email_address || '';
+    }
+    
+    document.getElementById('personalForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const personalData = {
+            first_name: document.getElementById('first_name').value.trim(),
+            middle_name: document.getElementById('middle_name').value.trim(),
+            last_name: document.getElementById('last_name').value.trim(),
+            gender: document.getElementById('gender').value,
+            birthdate: document.getElementById('birthdate').value,
+            mobile_number: document.getElementById('mobile_number').value.trim(),
+            email_address: document.getElementById('email_address').value.trim()
+        };
+        if (!personalData.first_name || !personalData.last_name) return showNotification('Please enter your first name and last name', 'warning');
+        if (!personalData.gender) return showNotification('Please select gender', 'warning');
+        if (!personalData.birthdate) return showNotification('Please enter birthdate', 'warning');
+        
+        sessionStorage.setItem('personalData', JSON.stringify(personalData));
+        showScreen('serviceDetailsScreen');
+        setDatePickerMin();
+    });
+}
+
+// ==================== PAGE 3: SERVICE DETAILS ====================
+function initServiceDetails() {
+    document.getElementById('backToPersonalBtn')?.addEventListener('click', () => showScreen('personalInfoScreen'));
+    
+    document.getElementById('viewRequirementsBtn')?.addEventListener('click', () => {
+        const transactionType = document.getElementById('transaction_type').value;
+        showRequirementsModal(transactionType);
+    });
+    
+    document.getElementById('closeRequirementsBtn')?.addEventListener('click', () => hideRequirementsModal());
+    document.getElementById('understandBtn')?.addEventListener('click', () => hideRequirementsModal());
+    
+    document.getElementById('confirmProceedBtn')?.addEventListener('click', () => {
+        hideConfirmationModal(); hideSuccessModal();
+        if (pendingQueueData) {
+            if (pendingQueueData.isPriority) queue.unshift(pendingQueueData.queueItem);
+            else queue.push(pendingQueueData.queueItem);
+            saveToStorage();
+            updateQueueStatusUI();
+            sessionStorage.clear();
+            showScreen('serviceSelectionScreen');
+            showNotification(`Queue number ${pendingQueueData.queueNumber} confirmed!`, 'success');
+            pendingQueueData = null; currentQueueData = null;
+        }
+    });
+    document.getElementById('continueBtn')?.addEventListener('click', () => { hideSuccessModal(); showConfirmationModal(); });
+    
+    document.getElementById('serviceForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const transaction_type = document.getElementById('transaction_type').value;
+        const preferred_date = document.getElementById('preferred_date').value;
+        const serviceType = sessionStorage.getItem('serviceType') || 'regular';
+        const personalData = JSON.parse(sessionStorage.getItem('personalData') || '{}');
+        const fullName = `${personalData.first_name || ''} ${personalData.middle_name || ''} ${personalData.last_name || ''}`.trim();
+        const isPriority = serviceType === 'priority';
+        
+        if (!preferred_date) return showNotification('Please select your preferred date', 'warning');
+        
+        let typePrefix = '', transactionLabel = '';
+        switch(transaction_type) {
+            case 'registration': typePrefix = 'R'; transactionLabel = 'Registration'; break;
+            case 'update': typePrefix = 'U'; transactionLabel = 'Updating/Correction'; break;
+            case 'paper_form': typePrefix = 'P'; transactionLabel = 'Paper Form'; break;
+            case 'inquiry': typePrefix = 'I'; transactionLabel = 'Inquiry'; break;
+            default: typePrefix = 'R'; transactionLabel = 'Registration';
+        }
+        
+        transactionCounters[transaction_type] = (transactionCounters[transaction_type] || 0) + 1;
+        const queueNumber = `${typePrefix}${String(transactionCounters[transaction_type]).padStart(3, '0')}`;
+        currentQueueNumber = queueNumber;
+        
+        const queueItem = {
+            id: Date.now(), type: 'walkin', queue_number: queueNumber, first_name: personalData.first_name || '',
+            middle_name: personalData.middle_name || '', last_name: personalData.last_name || '', full_name: fullName,
+            gender: personalData.gender || '', birthdate: personalData.birthdate || '',
+            mobile_number: personalData.mobile_number || '', email_address: personalData.email_address || '',
+            transaction_type: transaction_type, transaction_prefix: typePrefix, preferred_date: preferred_date,
+            location: 'PSA Samar - Catbalogan City', service_type: serviceType, timestamp: new Date().toISOString(), status: 'waiting'
+        };
+        
+        pendingQueueData = { queueItem, queueNumber, isPriority, fullName, transactionLabel, typePrefix };
+        showSuccessModal(queueNumber, fullName, transactionLabel, typePrefix);
+    });
+}
+
+// ==================== PAGE 4: QUEUE STATUS ====================
+function initQueueStatus() {
+    updateQueueStatusUI();
+    setInterval(updateQueueStatusUI, 2000);
+}
+
+function updateQueueStatusUI() {
+    loadFromStorage();
+    const servingDiv = document.getElementById('currentlyServing');
+    if (currentlyServing) servingDiv.innerHTML = `<div class="serving-number">${currentlyServing.queue_number}</div><div class="serving-name">${currentlyServing.full_name}</div><div class="serving-type">${currentlyServing.transaction_type}</div>`;
+    else servingDiv.innerHTML = `<div class="serving-number">---</div><div class="serving-name">No active transaction</div><div class="serving-type"></div>`;
+    
+    const queueList = document.getElementById('queueList');
+    if (queue.length === 0) queueList.innerHTML = `<div class="empty-message"><i class="bi bi-inbox"></i><p>No customers in queue</p></div>`;
+    else queueList.innerHTML = queue.map(item => `<div class="queue-item"><div><div class="queue-number">${item.queue_number}</div><div class="queue-name">${item.full_name}</div><div class="small text-secondary">📅 ${item.preferred_date || 'No date'}</div></div><span class="queue-type-badge walkin">Walk-in</span></div>`).join('');
+    
+    document.getElementById('queueCount').textContent = queue.length;
+    document.getElementById('totalWaiting').textContent = queue.length;
+    document.getElementById('walkinCount').textContent = queue.length;
+    
+    const yourInfo = document.getElementById('yourInfo');
+    if (currentQueueNumber) {
+        yourInfo.style.display = 'flex';
+        document.getElementById('yourQueueNumber').textContent = currentQueueNumber;
+        const position = queue.findIndex(i => i.queue_number === currentQueueNumber);
+        document.getElementById('peopleAhead').textContent = position !== -1 ? position + 1 : 0;
+    } else yourInfo.style.display = 'none';
+}
+
+// ==================== INITIALIZE ====================
+document.addEventListener('DOMContentLoaded', () => {
+    loadFromStorage();
+    initPrivacyModal();
+    initServiceSelection();
+    initPersonalInfo();
+    initServiceDetails();
+    initQueueStatus();
+    setDatePickerMin();
+});
+</script>
+</body>
+</html>
