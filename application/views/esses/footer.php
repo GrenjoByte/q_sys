@@ -153,7 +153,6 @@
 </style>
 <script type="text/javascript">
 	$('.dev_card').popup({
-		on         : 'click',
 		transition : 'drop',
 		position   : 'top center',
 		inline     : true,
