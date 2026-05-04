@@ -5,8 +5,16 @@ class Sys_control extends CI_Controller
 		parent::__construct();
 		$_SERVER['warning_message'] = "<br><h1 align='center' style='color: red;'>System Administrator Data Compromised!<br>Please contact the Developer!</h1>";
 	}
+	private function require_login()
+	{
+		if (!$this->session->userdata('logged_in')) {
+			header('Location: ' . base_url('i.php/sys_control/login'));
+			exit;
+		}
+	}
 	public function load_system_datetime()
 	{
+		$this->require_login();
 		$this->load->model('sys_model');
 		$this->sys_model->load_system_datetime();
 	}
@@ -16,11 +24,38 @@ class Sys_control extends CI_Controller
 	}
 	public function login()
 	{
-		session_destroy();	
 		$this->load->view('login.html');	
+	}
+	public function attempt_login()
+	{
+		$this->load->model('sys_model');
+		$data = $this->sys_model->attempt_login();
+
+		if ($data['status'] === 'success') {
+			$this->session->set_userdata([
+				'logged_in' => true,
+				'user_id'   => $data['user_id'],
+				'user_name' => $data['user_name'],
+			]);
+
+			// TEMP DEBUG
+			error_log('SESSION SET: ' . json_encode($this->session->userdata()));
+		}
+
+		header('Content-Type: application/json');
+		echo json_encode($data);
+		exit;
+	}
+
+	public function logout()
+	{
+		$this->session->sess_destroy();
+		header('Location: ' . base_url('i.php/sys_control/login'));
+		exit;
 	}
 	public function insert_new_transaction()
 	{
+		$this->require_login();
 		$this->load->model('sys_model');	
 		$this->sys_model->insert_new_transaction();
 	}
@@ -34,6 +69,7 @@ class Sys_control extends CI_Controller
 	}
   	public function admin()
 	{
+		$this->require_login();
 		$this->load->view('admin.html');	
 	}
 	public function load_current_serving()
@@ -48,7 +84,37 @@ class Sys_control extends CI_Controller
 	}
 	public function complete_current_serving()
 	{
+		$this->require_login();
 		$this->load->model('sys_model');
 		$this->sys_model->complete_current_serving();
+	}
+	public function load_recent_transactions()
+	{
+		$this->load->model('sys_model');
+		$this->sys_model->load_recent_transactions();
+	}
+	public function load_table_options()
+	{
+		$this->require_login();
+		$this->load->model('sys_model');
+		$this->sys_model->load_table_options();
+	}
+	public function grab_client()
+	{
+		$this->require_login();
+		$this->load->model('sys_model');
+		$this->sys_model->grab_client();
+	}
+	public function set_table_status()
+	{
+		$this->require_login();
+		$this->load->model('sys_model');
+		$this->sys_model->set_table_status();
+	}
+	public function create_account()
+	{
+		$this->require_login();
+		$this->load->model('sys_model');
+		$this->sys_model->create_account();
 	}
 }

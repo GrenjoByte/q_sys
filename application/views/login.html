@@ -49,7 +49,7 @@
                                 <input type="password" class="input-clean" id="password" name="password" placeholder="Enter your password" required>
                             </div>
                         </div>
-
+                        <div id="login_error" class="alert alert-danger d-none"></div>
                         <button type="submit" class="btn-signin">Sign In</button>
                     </form>
                 </div>
@@ -57,4 +57,55 @@
         </div>
     </div>
 </body>
+<script>
+    const base_url = '<?php echo base_url(); ?>';
+
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const username   = document.getElementById('username').value.trim();
+        const password   = document.getElementById('password').value.trim();
+        const btn        = document.querySelector('.btn-signin');
+        const error_el   = document.getElementById('login_error');
+
+        if (!username || !password) {
+            error_el.textContent = 'Please enter your username and password.';
+            error_el.classList.remove('d-none');
+            return;
+        }
+
+        btn.disabled        = true;
+        btn.textContent     = 'Signing in...';
+        error_el.classList.add('d-none');
+
+        fetch(base_url + 'i.php/sys_control/attempt_login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({
+                username: username,
+                password: password
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.href = data.redirect;
+            } else {
+                error_el.textContent = data.message;
+                error_el.classList.remove('d-none');
+                btn.disabled    = false;
+                btn.textContent = 'Sign In';
+            }
+        })
+        .catch(() => {
+            error_el.textContent = 'Network error. Please try again.';
+            error_el.classList.remove('d-none');
+            btn.disabled    = false;
+            btn.textContent = 'Sign In';
+        });
+    });
+</script>
 </html>

@@ -7,7 +7,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-     <style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
         <?php include 'admin.css'; ?>
     </style>
 </head>
@@ -23,10 +25,15 @@
                 <p>Admin Dashboard | Samar</p>
             </div>
         </div>
-        <div class="d-flex gap-3">
-            <a href="<?php echo base_url(); ?>index.html" class="logout-btn">
-                <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
+        <div class="d-flex align-items-center gap-3 justify-content-end">
+            <button id="create_account_btn" class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#create_account_modal">
+                <i class="bi bi-person-plus-fill"></i>
+                <span>Create Account</span>
+            </button>
+            <button id="logout_btn" class="btn btn-link text-secondary text-decoration-none d-flex align-items-center gap-1 p-0">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </button>
         </div>
     </div>
 
@@ -47,7 +54,7 @@
                     <div class="action-buttons">
                         <button id="call_client_btn" class="btn-call"><i class="bi bi-megaphone"></i> Call Client</button>
                         <button id="complete_btn" class="btn-complete"><i class="bi bi-check2"></i> Complete</button>
-                        <button id="refresh_btn" class="btn-refresh"><i class="bi bi-arrow-repeat"></i> Refresh</button>
+                        <button id="serve_btn" class="btn-refresh"><i class="bi bi-person-check"></i> Serve</button>
                     </div>
                 </div>
                 <div class="queue-list-container">
@@ -86,9 +93,7 @@
                     <div>
                         <div class="control-title"><i class="bi bi-grid"></i> TABLE</div>
                         <select id="counter_window" class="form-select">
-                            <option value="Table 1" selected>Table 1</option>
-                            <option value="Table 2">Table 2</option>
-                            <option value="Table 3">Table 3</option>
+                            
                         </select>
                     </div>
                 </div>
@@ -106,7 +111,6 @@
             <table class="log-table">
                 <thead>
                     <tr>
-                        <th>Time</th>
                         <th>Queue No.</th>
                         <th>Transaction</th>
                         <th>Priority</th>
@@ -114,40 +118,70 @@
                     </tr>
                 </thead>
                 <tbody id="transaction_log_body">
-                    <tr>
-                        <td>2:44:00 PM</td>
+                    <!-- <tr>
                         <td><strong>R001</strong></td>
                         <td>Registration</td>
                         <td>Regular</td>
                         <td>Table 01</td>
-                    </tr>
-                    <tr>
-                        <td>2:44:05 PM</td>
-                        <td><strong>U007</strong></td>
-                        <td>Update</td>
-                        <td>Regular</td>
-                        <td>Table 01</td>
-                    </tr>
-                    <tr>
-                        <td>3:11:51 PM</td>
-                        <td><strong>P004</strong></td>
-                        <td>Paper Form</td>
-                        <td>Regular</td>
-                        <td>Table 02</td>
-                    </tr>
-                    <tr>
-                        <td>4:42:26 PM</td>
-                        <td><strong>P003</strong></td>
-                        <td>Paper Form</td>
-                        <td>Priority</td>
-                        <td>Table 02</td>
-                    </tr>
+                    </tr>  -->
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
+<div class="modal fade" id="create_account_modal" tabindex="-1" aria-labelledby="create_account_modal_label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="create_account_modal_label">
+                    <i class="bi bi-person-plus-fill me-2"></i>Create Account
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="create_account_error" class="alert alert-warning d-none"></div>
+                <div class="mb-3">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="new_first_name" placeholder="Enter first name">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Middle Name <span class="text-muted">(optional)</span></label>
+                    <input type="text" class="form-control" id="new_middle_name" placeholder="Enter middle name">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="new_last_name" placeholder="Enter last name">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email <span class="text-muted">(optional)</span></label>
+                    <input type="email" class="form-control" id="new_email" placeholder="Enter email">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" id="new_username" placeholder="Enter username">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="new_password" placeholder="Enter password">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">User Type</label>
+                    <select class="form-select" id="new_user_type">
+                        <option value="1">Admin</option>
+                        <option value="2">Staff</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submit_account_btn">
+                    <i class="bi bi-check-circle me-1"></i>Create Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
 // ==================== GLOBAL VARIABLES ====================
 const base_url = "<?php echo base_url(); ?>";
@@ -241,33 +275,47 @@ function fetch_current_serving() {
     })
     .then(res => res.json())
     .then(data => {
-        display_current_serving(data, transaction_class, priority_level);
+        display_current_serving(data);
     })
     .catch(() => {
-        display_current_serving(null, transaction_class, priority_level);
+        display_current_serving(null);
     });
 }
 
-function display_current_serving(data, transaction_class, priority_level) {
-    const type_prefix     = type_prefix_map[transaction_class]  || 'R';
-    const priority_prefix = priority_prefix_map[priority_level] || 'R';
-
+function display_current_serving(data) {
     const serving_number_el = document.getElementById('serving_number');
     const serving_name_el   = document.getElementById('serving_name');
     const serving_type_el   = document.getElementById('serving_type');
 
     if (!data || data.status === 'empty' || data.current_sequence === null) {
         serving_number_el.textContent = '---';
-        serving_name_el.textContent   = 'No clients in queue';
-        serving_type_el.textContent   = transaction_label_map[transaction_class] || '---';
+        serving_name_el.textContent   = '---';
+        serving_type_el.textContent   = '---';
         return;
     }
+
+    const class_int_map = {
+        1: 'registration',
+        2: 'update',
+        3: 'paper_form',
+        4: 'inquiry'
+    };
+
+    const priority_int_map = {
+        1: 'priority',
+        2: 'regular'
+    };
+
+    const class_key       = class_int_map[data.transaction_class]  || 'registration';
+    const priority_key    = priority_int_map[data.priority_level]  || 'regular';
+    const type_prefix     = type_prefix_map[class_key]             || 'R';
+    const priority_prefix = priority_prefix_map[priority_key]      || 'R';
 
     const queue_number = `${priority_prefix}:${type_prefix}-${data.current_sequence}`;
 
     serving_number_el.textContent = queue_number;
     serving_name_el.textContent   = data.full_name || '---';
-    serving_type_el.textContent   = transaction_label_map[transaction_class] || '---';
+    serving_type_el.textContent   = transaction_label_map[class_key] || '---';
 }
 
 // ==================== QUEUE LIST ====================
@@ -381,7 +429,7 @@ function init_call_client_btn() {
             const priority_letter = serving_number.charAt(0).toUpperCase();
             const priority_label  = priority_letter === 'P' ? 'priority number' : 'regular number';
 
-            const announcement = `Now serving ${priority_label} ${serving_number}, ${serving_name}, please proceed to ${counter_window}.`;
+            const announcement = `Now serving ${priority_label} ${serving_number}, please proceed to ${counter_window}.`;
 
             
             function get_preferred_voice() {
@@ -406,18 +454,335 @@ function init_call_client_btn() {
         });
     }
 
+    function fetch_recent_transactions() {
+    const priority_level    = document.getElementById('priority_level').value;
+    const transaction_class = document.getElementById('transaction_class').value;
+
+    return fetch(base_url + 'i.php/sys_control/load_recent_transactions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            transaction_class: transaction_class_map[transaction_class],
+            priority_level:    priority_level_map[priority_level]
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        display_recent_transactions(data);
+    })
+    .catch(() => {
+        display_recent_transactions(null);
+    });
+}
+
+function init_grab_client_btn() {
+    const grab_client_btn = document.getElementById('serve_btn');
+    if (!serve_btn) return;
+
+    grab_client_btn.addEventListener('click', () => {
+        fetch_grab_client();
+    });
+}
+
+function display_recent_transactions(data) {
+    const tbody = document.getElementById('transaction_log_body');
+
+    if (!data || data.status === 'empty' || !data.transactions?.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center">No recent transactions</td>
+            </tr>
+        `;
+        return;
+    }
+
+    const class_int_map = {
+        1: 'registration',
+        2: 'update',
+        3: 'paper_form',
+        4: 'inquiry'
+    };
+
+    const priority_int_map = {
+        1: 'priority',
+        2: 'regular'
+    };
+
+    const priority_label_map = {
+        'priority': 'Priority',
+        'regular':  'Regular'
+    };
+
+    tbody.innerHTML = data.transactions.map(item => {
+        const class_key         = class_int_map[item.transaction_class]  || 'registration';
+        const priority_key      = priority_int_map[item.priority_level]  || 'regular';
+        const type_prefix       = type_prefix_map[class_key]             || 'R';
+        const priority_prefix   = priority_prefix_map[priority_key]      || 'R';
+
+        const sequence          = String(item.transaction_sequence).padStart(3, '0');
+        const queue_number      = `${priority_prefix}:${type_prefix}-${sequence}`;
+        const transaction_label = transaction_label_map[class_key]       || '---';
+        const priority_label    = priority_label_map[priority_key]       || '---';
+        const full_name         = [item.first_name, item.middle_name, item.last_name].filter(Boolean).join(' ');
+
+        return `
+            <tr>
+                <td><strong>${queue_number}</strong></td>
+                <td>${full_name}</td>
+                <td>${transaction_label}</td>
+                <td>${priority_label}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function fetch_table_options() {
+    return fetch(base_url + 'i.php/sys_control/load_table_options', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        display_table_options(data);
+    })
+    .catch(() => {
+        display_table_options(null);
+    });
+}
+
+function display_table_options(data) {
+    const counter_window_el = document.getElementById('counter_window');
+
+    counter_window_el.innerHTML = '';
+
+    if (!data || data.status === 'empty' || !data.tables?.length) {
+        counter_window_el.innerHTML = `<option value="">No tables available</option>`;
+        return;
+    }
+
+    counter_window_el.innerHTML = data.tables.map((item) => `
+        <option value="${item.table_value}"
+                data-table-id="${item.table_id}"
+                data-table-status="${item.table_status}"
+                data-is-mine="${item.is_mine}"
+                ${item.is_mine == 1 ? 'selected' : ''}>
+            Table ${item.table_value}${item.is_mine == 1 ? ' (Yours)' : item.table_status == 2 ? ' (In Use)' : ''}
+        </option>
+    `).join('');
+
+    // Auto-select the option marked as mine
+    const my_table = counter_window_el.querySelector('option[data-is-mine="1"]');
+    const first_available = Array.from(counter_window_el.options).find(opt => opt.getAttribute('data-table-status') != 2);
+
+    if (my_table) {
+        counter_window_el.value = my_table.value;
+    } else if (first_available) {
+        counter_window_el.value = first_available.value;
+    }
+
+    // Update labels on change
+    counter_window_el.addEventListener('change', () => {
+        const selected = counter_window_el.options[counter_window_el.selectedIndex];
+
+        // Unmark all options
+        Array.from(counter_window_el.options).forEach(opt => {
+            const base_label = `Table ${opt.value}`;
+            const was_mine   = opt.getAttribute('data-is-mine') == 1;
+            const in_use     = opt.getAttribute('data-table-status') == 2;
+
+            opt.setAttribute('data-is-mine', '0');
+
+            if (opt === selected) return; // handle selected separately
+            opt.textContent = base_label + (in_use && !was_mine ? ' (In Use)' : '');
+        });
+
+        // Mark selected as yours
+        selected.setAttribute('data-is-mine', '1');
+        selected.setAttribute('data-table-status', '2');
+        selected.textContent = `Table ${selected.value} (Yours)`;
+    });
+}
+
+function fetch_grab_client() {
+    const priority_level    = document.getElementById('priority_level').value;
+    const transaction_class = document.getElementById('transaction_class').value;
+    const counter_window_el = document.getElementById('counter_window');
+    const table_id          = counter_window_el.options[counter_window_el.selectedIndex].getAttribute('data-table-id');
+
+    return fetch(base_url + 'i.php/sys_control/grab_client', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            transaction_class: transaction_class_map[transaction_class],
+            priority_level:    priority_level_map[priority_level],
+            table_id:          table_id
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            display_current_serving(data);
+            fetch_queue_list();
+            show_notification(data.message, 'success');
+        } else {
+            show_notification(data.message, 'warning');
+        }
+    })
+    .catch(() => {
+        show_notification('Network error. Please check your connection and try again.', 'warning');
+    });
+}
+
+function init_serve_btn() {
+    const serve_btn = document.getElementById('serve_btn');
+    if (!serve_btn) return;
+
+    serve_btn.addEventListener('click', () => {
+        fetch_grab_client();
+    });
+}
+
+function fetch_set_table_status() {
+    const counter_window_el = document.getElementById('counter_window');
+    const selected_option   = counter_window_el.options[counter_window_el.selectedIndex];
+    const table_id          = selected_option.getAttribute('data-table-id');
+    const is_in_use         = selected_option.getAttribute('data-table-status') == 2;
+    const is_mine           = selected_option.getAttribute('data-is-mine') == 1;
+
+    // Block if table is taken by another user
+    if (is_in_use && !is_mine) {
+        show_notification('This table is currently in use by another user.', 'warning');
+        return Promise.resolve();
+    }
+
+    return fetch(base_url + 'i.php/sys_control/set_table_status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            table_id: table_id
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Update data attributes on all options to reflect new ownership
+            Array.from(counter_window_el.options).forEach(opt => {
+                opt.setAttribute('data-is-mine', '0');
+            });
+            selected_option.setAttribute('data-is-mine', '1');
+            selected_option.setAttribute('data-table-status', '2');
+        } else {
+            show_notification(data.message, 'warning');
+        }
+    })
+    .catch(() => {
+        show_notification('Network error. Please check your connection and try again.', 'warning');
+    });
+}
+
+function init_create_account() {
+    document.getElementById('submit_account_btn')?.addEventListener('click', () => {
+        const first_name  = document.getElementById('new_first_name').value.trim();
+        const middle_name = document.getElementById('new_middle_name').value.trim();
+        const last_name   = document.getElementById('new_last_name').value.trim();
+        const email       = document.getElementById('new_email').value.trim();
+        const username    = document.getElementById('new_username').value.trim();
+        const password    = document.getElementById('new_password').value.trim();
+        const user_type   = document.getElementById('new_user_type').value;
+        const error_el    = document.getElementById('create_account_error');
+        const submit_btn  = document.getElementById('submit_account_btn');
+
+        error_el.classList.add('d-none');
+
+        if (!first_name || !last_name || !username || !password) {
+            error_el.textContent = 'First name, last name, username, and password are required.';
+            error_el.classList.remove('d-none');
+            return;
+        }
+
+        set_loading(submit_btn, true);
+
+        fetch(base_url + 'i.php/sys_control/create_account', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({
+                first_name,
+                middle_name,
+                last_name,
+                email,
+                username,
+                password,
+                user_type
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            set_loading(submit_btn, false);
+            if (data.status === 'success') {
+                bootstrap.Modal.getInstance(document.getElementById('create_account_modal')).hide();
+                show_notification(data.message, 'success');
+                document.getElementById('new_first_name').value  = '';
+                document.getElementById('new_middle_name').value = '';
+                document.getElementById('new_last_name').value   = '';
+                document.getElementById('new_email').value       = '';
+                document.getElementById('new_username').value    = '';
+                document.getElementById('new_password').value    = '';
+            } else {
+                error_el.textContent = data.message;
+                error_el.classList.remove('d-none');
+            }
+        })
+        .catch(() => {
+            set_loading(submit_btn, false);
+            error_el.textContent = 'Network error. Please try again.';
+            error_el.classList.remove('d-none');
+        });
+    });
+}
+
 function refresh_panel() {
     fetch_current_serving();
     fetch_queue_list();
+    fetch_recent_transactions();
 }
 
 ['priority_level', 'transaction_class', 'counter_window'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', refresh_panel);
 });
-document.addEventListener('DOMContentLoaded', () => {
+document.getElementById('counter_window')?.addEventListener('change', () => {
+    fetch_set_table_status();
     refresh_panel();
+});
+
+document.getElementById('logout_btn')?.addEventListener('dblclick', () => {
+    if (confirm('Are you sure you want to log out?')) {
+        window.location.href = base_url + 'i.php/sys_control/logout';
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetch_table_options().then(() => {
+        refresh_panel();
+    });
     init_complete_btn();
     init_call_client_btn();
+    init_grab_client_btn();
+    init_create_account();
 });
 
 document.addEventListener('DOMContentLoaded', refresh_panel);
