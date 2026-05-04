@@ -17,7 +17,7 @@
     <!-- Header -->
     <div class="admin-header">
         <div class="logo-section">
-                <img src="<?php echo base_url();?>images/admin_images/logopsa.webp" alt="PSA Logo" class="logo-img">
+            <img src="<?php echo base_url();?>images/admin_images/logopsa.webp" alt="PSA Logo" class="logo-img">
             <div>
                 <h1>Philippine Statistics Authority</h1>
                 <p>Admin Dashboard | Samar</p>
@@ -32,9 +32,9 @@
 
     <div class="currently-serving">
         <div class="serving-label"><i class="bi bi-megaphone-fill me-2"></i> CURRENTLY SERVING</div>
-        <div class="serving-number" id="servingNumber">R005</div>
-        <div class="serving-name" id="servingName">Juan Dela Cruz</div>
-        <div class="serving-type" id="servingType">Registration</div>
+        <div class="serving-number" id="serving_number">----</div>
+        <div class="serving-name" id="serving_name">----</div>
+        <div class="serving-type" id="serving_type">----</div>
     </div>
 
     <div class="row g-4 mb-4">
@@ -45,48 +45,14 @@
                 <div class="panel-header">
                     <h3><i class="bi bi-list-ul"></i> Waiting Queue</h3>
                     <div class="action-buttons">
-                        <button id="callNextBtn" class="btn-call"><i class="bi bi-megaphone"></i> Call Next</button>
-                        <button id="completeBtn" class="btn-complete"><i class="bi bi-check2"></i> Complete</button>
-                        <button id="refreshBtn" class="btn-refresh"><i class="bi bi-arrow-repeat"></i> Refresh</button>
+                        <button id="call_client_btn" class="btn-call"><i class="bi bi-megaphone"></i> Call Client</button>
+                        <button id="complete_btn" class="btn-complete"><i class="bi bi-check2"></i> Complete</button>
+                        <button id="refresh_btn" class="btn-refresh"><i class="bi bi-arrow-repeat"></i> Refresh</button>
                     </div>
                 </div>
                 <div class="queue-list-container">
-                    <div id="queueList" class="queue-list">
-                        <div class="queue-item">
-                            <div>
-                                <div class="queue-number">P002</div>
-                                <div class="queue-name">Andres Castro Bonifacio</div>
-                            </div>
-                            <div><span class="queue-badge badge-walkin">Walk-in</span></div>
-                        </div>
-                        <div class="queue-item">
-                            <div>
-                                <div class="queue-number">I003</div>
-                                <div class="queue-name">Edward Santos</div>
-                            </div>
-                            <div><span class="queue-badge badge-walkin">Walk-in</span></div>
-                        </div>
-                        <div class="queue-item">
-                            <div>
-                                <div class="queue-number">I002</div>
-                                <div class="queue-name">Hannah De Luna</div>
-                            </div>
-                            <div><span class="queue-badge badge-walkin">Walk-in</span></div>
-                        </div>
-                        <div class="queue-item">
-                            <div>
-                                <div class="queue-number">R007</div>
-                                <div class="queue-name">Lapu-Lapu Mactan</div>
-                            </div>
-                            <div><span class="queue-badge badge-walkin">Walk-in</span></div>
-                        </div>
-                        <div class="queue-item">
-                            <div>
-                                <div class="queue-number">R008</div>
-                                <div class="queue-name">Corazon Aquino</div>
-                            </div>
-                            <div><span class="queue-badge badge-walkin">Walk-in</span></div>
-                        </div>
+                    <div id="queue_list" class="queue-list">
+                        
                     </div>
                 </div>
             </div>
@@ -99,7 +65,7 @@
                     <!-- Priority Level -->
                     <div>
                         <div class="control-title"><i class="bi bi-flag-fill"></i> PRIORITY LEVEL</div>
-                        <select id="priorityLevel" class="form-select">
+                        <select id="priority_level" class="form-select">
                             <option value="priority">Priority</option>
                             <option value="regular" selected>Regular</option>
                         </select>
@@ -108,7 +74,7 @@
                     <!-- Transaction Class -->
                     <div>
                         <div class="control-title"><i class="bi bi-card-list"></i> TRANSACTION CLASS</div>
-                        <select id="transactionClass" class="form-select">
+                        <select id="transaction_class" class="form-select">
                             <option value="registration" selected>Registration (R)</option>
                             <option value="update">Updating/Correction (U)</option>
                             <option value="paper_form">Paper Form (P)</option>
@@ -119,10 +85,10 @@
                     <!-- Table -->
                     <div>
                         <div class="control-title"><i class="bi bi-grid"></i> TABLE</div>
-                        <select id="counterWindow" class="form-select">
-                            <option value="Table 01" selected>Table 01</option>
-                            <option value="Table 02">Table 02</option>
-                            <option value="Table 03">Table 03</option>
+                        <select id="counter_window" class="form-select">
+                            <option value="Table 1" selected>Table 1</option>
+                            <option value="Table 2">Table 2</option>
+                            <option value="Table 3">Table 3</option>
                         </select>
                     </div>
                 </div>
@@ -147,7 +113,7 @@
                         <th>Table</th>
                     </tr>
                 </thead>
-                <tbody id="transactionLogBody">
+                <tbody id="transaction_log_body">
                     <tr>
                         <td>2:44:00 PM</td>
                         <td><strong>R001</strong></td>
@@ -183,207 +149,280 @@
 </div>
 
 <script>
+// ==================== GLOBAL VARIABLES ====================
+const base_url = "<?php echo base_url(); ?>";
+let current_date      = null;
+let current_time      = null;
+let previous_month    = null;
+let current_queue_data   = null;
+let current_queue_number = null;
+
+// ==================== HELPER FUNCTIONS ====================
+function show_notification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.cssText = 'position:fixed;top:20px;right:20px;z-index:1000;background:white;box-shadow:0 4px 12px rgba(0,0,0,0.15);border-radius:12px;padding:12px 20px;';
+    notification.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}" style="color:${type === 'success' ? '#10b981' : '#f59e0b'}"></i><span>${message}</span></div>`;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+function set_loading(btn_el, is_loading) {
+    if (is_loading) {
+        btn_el.disabled = true;
+        btn_el.dataset.original_text = btn_el.innerHTML;
+        btn_el.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...`;
+    } else {
+        btn_el.disabled = false;
+        btn_el.innerHTML = btn_el.dataset.original_text || btn_el.innerHTML;
+    }
+}
+
 // ==================== PSA ADMIN PANEL ====================
 
-let queue = [
-    { id: 1, queue_number: 'P002', full_name: 'Andres Castro Bonifacio', transaction_label: 'Paper Form', priority: 'regular', service_type: 'regular' },
-    { id: 2, queue_number: 'I003', full_name: 'Edward Santos', transaction_label: 'Inquiry', priority: 'regular', service_type: 'regular' },
-    { id: 3, queue_number: 'I002', full_name: 'Hannah De Luna', transaction_label: 'Inquiry', priority: 'regular', service_type: 'regular' },
-    { id: 4, queue_number: 'R007', full_name: 'Lapu-Lapu Mactan', transaction_label: 'Registration', priority: 'regular', service_type: 'regular' },
-    { id: 5, queue_number: 'R008', full_name: 'Corazon Aquino', transaction_label: 'Registration', priority: 'regular', service_type: 'regular' }
-];
-let currentlyServing = { queue_number: 'R005', full_name: 'Juan Dela Cruz', transaction_label: 'Registration' };
-let transactionLog = [
-    { time: '2:44:00 PM', queueNumber: 'R001', transactionType: 'Registration', priority: 'Regular', window: 'Table 01' },
-    { time: '2:44:05 PM', queueNumber: 'U007', transactionType: 'Update', priority: 'Regular', window: 'Table 01' },
-    { time: '3:11:51 PM', queueNumber: 'P004', transactionType: 'Paper Form', priority: 'Regular', window: 'Table 02' },
-    { time: '4:42:26 PM', queueNumber: 'P003', transactionType: 'Paper Form', priority: 'Priority', window: 'Table 02' }
-];
-let currentCounter = 'Table 01';
+const transaction_class_map = {
+    'registration': 1,
+    'update':       2,
+    'paper_form':   3,
+    'inquiry':      4
+};
 
-// DOM Elements
-const queueListEl = document.getElementById('queueList');
-const servingNumberEl = document.getElementById('servingNumber');
-const servingNameEl = document.getElementById('servingName');
-const servingTypeEl = document.getElementById('servingType');
-const transactionLogBody = document.getElementById('transactionLogBody');
+const priority_level_map = {
+    'priority': 1,
+    'regular':  2
+};
 
-// Dropdowns
-const priorityLevelSelect = document.getElementById('priorityLevel');
-const counterWindowSelect = document.getElementById('counterWindow');
+const type_prefix_map = {
+    'registration': 'R',
+    'update':       'U',
+    'paper_form':   'P',
+    'inquiry':      'I'
+};
 
-// Buttons
-const callNextBtn = document.getElementById('callNextBtn');
-const completeBtn = document.getElementById('completeBtn');
-const refreshBtn = document.getElementById('refreshBtn');
+const priority_prefix_map = {
+    'priority': 'P',
+    'regular':  'R'
+};
 
-// ==================== LOAD / SAVE ====================
-function loadFromStorage() {
-    const savedData = localStorage.getItem('psaQueueSystem');
-    if (savedData) {
-        const data = JSON.parse(savedData);
-        if (data.queue && data.queue.length > 0) queue = data.queue;
-        currentlyServing = data.currentlyServing || null;
-    }
-    const savedLog = localStorage.getItem('psaTransactionLog');
-    if (savedLog && JSON.parse(savedLog).length > 0) {
-        transactionLog = JSON.parse(savedLog);
-    }
-    const savedCounter = localStorage.getItem('psaCurrentCounter');
-    if (savedCounter) {
-        currentCounter = savedCounter;
-        if (counterWindowSelect) counterWindowSelect.value = currentCounter;
-    }
+const transaction_label_map = {
+    'registration': 'Registration',
+    'update':       'Updating/Correction',
+    'paper_form':   'Paper Form',
+    'inquiry':      'Inquiry'
+};
+
+const class_int_map = {
+    1: 'registration',
+    2: 'update',
+    3: 'paper_form',
+    4: 'inquiry'
+};
+
+const priority_int_map = {
+    1: 'priority',
+    2: 'regular'
+};
+
+// ==================== CURRENT SERVING ====================
+
+function fetch_current_serving() {
+    const priority_level    = document.getElementById('priority_level').value;
+    const transaction_class = document.getElementById('transaction_class').value;
+
+    return fetch(base_url + 'i.php/sys_control/load_current_serving', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            transaction_class: transaction_class_map[transaction_class],
+            priority_level:    priority_level_map[priority_level]
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        display_current_serving(data, transaction_class, priority_level);
+    })
+    .catch(() => {
+        display_current_serving(null, transaction_class, priority_level);
+    });
 }
 
-function saveToStorage() {
-    localStorage.setItem('psaQueueSystem', JSON.stringify({ queue, currentlyServing }));
-    localStorage.setItem('psaTransactionLog', JSON.stringify(transactionLog));
-    localStorage.setItem('psaCurrentCounter', currentCounter);
-}
+function display_current_serving(data, transaction_class, priority_level) {
+    const type_prefix     = type_prefix_map[transaction_class]  || 'R';
+    const priority_prefix = priority_prefix_map[priority_level] || 'R';
 
-// ==================== UI UPDATE ====================
-function updateUI() {
-    updateQueueList();
-    updateCurrentlyServing();
-    updateTransactionLog();
-}
+    const serving_number_el = document.getElementById('serving_number');
+    const serving_name_el   = document.getElementById('serving_name');
+    const serving_type_el   = document.getElementById('serving_type');
 
-function updateQueueList() {
-    if (!queueListEl) return;
-
-    if (queue.length === 0) {
-        queueListEl.innerHTML = '<div class="empty-queue"><i class="bi bi-inbox"></i><p>No customers in queue</p></div>';
+    if (!data || data.status === 'empty' || data.current_sequence === null) {
+        serving_number_el.textContent = '---';
+        serving_name_el.textContent   = 'No clients in queue';
+        serving_type_el.textContent   = transaction_label_map[transaction_class] || '---';
         return;
     }
 
-    queueListEl.innerHTML = queue.map(item => {
-        return `<div class="queue-item">
-                    <div>
-                        <div class="queue-number">${item.queue_number}</div>
-                        <div class="queue-name">${item.full_name}</div>
-                    </div>
-                    <div>
-                        <span class="queue-badge badge-walkin">Walk-in</span>
-                    </div>
-                </div>`;
+    const queue_number = `${priority_prefix}:${type_prefix}-${data.current_sequence}`;
+
+    serving_number_el.textContent = queue_number;
+    serving_name_el.textContent   = data.full_name || '---';
+    serving_type_el.textContent   = transaction_label_map[transaction_class] || '---';
+}
+
+// ==================== QUEUE LIST ====================
+
+function fetch_queue_list() {
+    const priority_level    = document.getElementById('priority_level').value;
+    const transaction_class = document.getElementById('transaction_class').value;
+
+    return fetch(base_url + 'i.php/sys_control/load_queue_list', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            transaction_class: transaction_class_map[transaction_class],
+            priority_level:    priority_level_map[priority_level]
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        display_queue_list(data, transaction_class, priority_level);
+    })
+    .catch(() => {
+        display_queue_list(null, transaction_class, priority_level);
+    });
+}
+
+function display_queue_list(data, transaction_class, priority_level) {
+    const queue_list_el = document.getElementById('queue_list');
+
+    if (!data || data.status === 'empty' || !data.queue_list?.length) {
+        queue_list_el.innerHTML = `
+            <div class="queue-item-empty">
+                No clients in queue
+            </div>
+        `;
+        return;
+    }
+
+    queue_list_el.innerHTML = data.queue_list.map(item => {
+        const class_key      = class_int_map[item.transaction_class]   || 'registration';
+        const priority_key   = priority_int_map[item.priority_level]   || 'regular';
+        const type_prefix    = type_prefix_map[class_key]              || 'R';
+        const priority_prefix = priority_prefix_map[priority_key]      || 'R';
+
+        const sequence     = String(item.transaction_sequence).padStart(3, '0');
+        const queue_number = `${priority_prefix}:${type_prefix}-${sequence}`;
+        const full_name    = [item.first_name, item.middle_name, item.last_name].filter(Boolean).join(' ');
+
+        return `
+            <div class="queue-item">
+                <span class="queue-item-number">${queue_number}</span>
+                <span class="queue-item-name">${full_name}</span>
+            </div>
+        `;
     }).join('');
 }
 
-function updateCurrentlyServing() {
-    if (!currentlyServing) {
-        servingNumberEl.textContent = '---';
-        servingNameEl.textContent = 'No active transaction';
-        servingTypeEl.textContent = '';
-        return;
-    }
-    servingNumberEl.textContent = currentlyServing.queue_number;
-    servingNameEl.textContent = currentlyServing.full_name;
-    servingTypeEl.textContent = currentlyServing.transaction_label || currentlyServing.transaction_type;
-}
+// ==================== CONTROLS ====================
 
-function updateTransactionLog() {
-    if (!transactionLogBody) return;
+function init_complete_btn() {
+    const complete_btn = document.getElementById('complete_btn');
+    if (!complete_btn) return;
 
-    if (transactionLog.length === 0) {
-        transactionLogBody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-4">No transactions yet</td></tr>';
-        return;
-    }
+    complete_btn.addEventListener('dblclick', () => {
+        const priority_level    = document.getElementById('priority_level').value;
+        const transaction_class = document.getElementById('transaction_class').value;
 
-    transactionLogBody.innerHTML = transactionLog.slice(-15).reverse().map(log => `
-        <tr>
-            <td>${log.time}</td>
-            <td><strong>${log.queueNumber}</strong></td>
-            <td>${log.transactionType}</td>
-            <td>${log.priority}</td>
-            <td>${log.window}</td>
-        </tr>
-    `).join('');
-}
-
-// ==================== ACTIONS ====================
-function callNext() {
-    if (currentlyServing) {
-        showNotification('Complete current transaction first', 'warning');
-        return;
-    }
-    if (queue.length === 0) {
-        showNotification('No customers in queue', 'warning');
-        return;
-    }
-
-    currentlyServing = queue.shift();
-    currentlyServing.status = 'serving';
-    currentlyServing.serviceStart = new Date();
-    currentlyServing.assignedWindow = currentCounter;
-    currentlyServing.priority = priorityLevelSelect.value;
-
-    saveToStorage();
-    updateUI();
-    showNotification(`Now serving: ${currentlyServing.queue_number} at ${currentCounter}`, 'success');
-}
-
-function completeTransaction() {
-    if (!currentlyServing) {
-        showNotification('No active transaction to complete', 'warning');
-        return;
-    }
-
-    const endTime = new Date();
-
-    transactionLog.unshift({
-        id: Date.now(),
-        time: endTime.toLocaleTimeString(),
-        queueNumber: currentlyServing.queue_number,
-        transactionType: currentlyServing.transaction_label || currentlyServing.transaction_type,
-        priority: priorityLevelSelect.options[priorityLevelSelect.selectedIndex]?.text || 'Regular',
-        window: currentCounter
+        fetch(base_url + 'i.php/sys_control/complete_current_serving', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({
+                transaction_class: transaction_class_map[transaction_class],
+                priority_level:    priority_level_map[priority_level]
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                show_notification(data.message, 'success');
+                refresh_panel();
+            } else {
+                show_notification(data.message, 'warning');
+            }
+        })
+        .catch(() => {
+            show_notification('Network error. Please check your connection and try again.', 'warning');
+        });
     });
-
-    if (transactionLog.length > 50) transactionLog.pop();
-
-    currentlyServing = null;
-    saveToStorage();
-    updateUI();
-    showNotification('Transaction completed successfully', 'success');
 }
 
-function refreshQueue() {
-    loadFromStorage();
-    updateUI();
-    showNotification('Queue refreshed!', 'success');
-}
+function init_call_client_btn() {
+        const call_client_btn = document.getElementById('call_client_btn');
+        if (!call_client_btn) return;
 
+        call_client_btn.addEventListener('click', () => {
+            const counter_window = document.getElementById('counter_window').value;
 
+            const serving_number = document.getElementById('serving_number').textContent.trim();
+            const serving_name   = document.getElementById('serving_name').textContent.trim();
 
-// ==================== EVENT LISTENERS ====================
-function initEventListeners() {
-    if (callNextBtn) callNextBtn.addEventListener('click', callNext);
-    if (completeBtn) completeBtn.addEventListener('click', completeTransaction);
-    if (refreshBtn) refreshBtn.addEventListener('click', refreshQueue);
+            if (!serving_number || serving_number === '---') {
+                show_notification('No client currently being served.', 'warning');
+                return;
+            }
 
-    if (counterWindowSelect) {
-        counterWindowSelect.addEventListener('change', () => {
-            currentCounter = counterWindowSelect.value;
-            saveToStorage();
-            showNotification(`Table changed to ${currentCounter}`, 'info');
+            const priority_letter = serving_number.charAt(0).toUpperCase();
+            const priority_label  = priority_letter === 'P' ? 'priority number' : 'regular number';
+
+            const announcement = `Now serving ${priority_label} ${serving_number}, ${serving_name}, please proceed to ${counter_window}.`;
+
+            
+            function get_preferred_voice() {
+                const voices   = window.speechSynthesis.getVoices();
+                const filipino = voices.find(v =>
+                    v.lang === 'fil-PH' ||
+                    v.lang === 'tl-PH'  ||
+                    v.name.toLowerCase().includes('filipino') ||
+                    v.name.toLowerCase().includes('tagalog')
+                );
+                return filipino || voices.find(v => v.lang === 'en-US') || null;
+            }
+
+            const utterance  = new SpeechSynthesisUtterance(announcement);
+            utterance.voice  = get_preferred_voice();
+            utterance.lang   = utterance.voice?.lang || 'en-US';
+            utterance.rate   = 0.7;
+            utterance.pitch  = 1;
+
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
         });
     }
+
+function refresh_panel() {
+    fetch_current_serving();
+    fetch_queue_list();
 }
 
-// ==================== INITIALIZE ====================
-function init() {
-    loadFromStorage();
-    initEventListeners();
-    updateUI();
+['priority_level', 'transaction_class', 'counter_window'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', refresh_panel);
+});
+document.addEventListener('DOMContentLoaded', () => {
+    refresh_panel();
+    init_complete_btn();
+    init_call_client_btn();
+});
 
-    setInterval(() => {
-        loadFromStorage();
-        updateUI();
-    }, 2000);
-}
+document.addEventListener('DOMContentLoaded', refresh_panel);
 
-document.addEventListener('DOMContentLoaded', init);
+// ==================== CONTROLS ====================
 </script>
 </body>
 </html>
