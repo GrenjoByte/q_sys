@@ -187,7 +187,7 @@ body {
     gap: 12px;
 }
 
-.btn-call, .btn-complete, .btn-serve, .btn-back, .btn-skip {
+.btn-call, .btn-complete, .btn-serve, .btn-unserve, .btn-back, .btn-skip {
     padding: 8px 20px;
     border-radius: 12px;
     font-size: 13px;
@@ -230,6 +230,26 @@ body {
     transform: translateY(-2px);
 }
 
+.btn-unserve {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-unserve:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.btn-back {
+    background: #6c757d;
+    color: #ffffff;
+}
+
+.btn-back:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
 .btn-back {
     background: #6B7280;
     color: white;
@@ -242,7 +262,7 @@ body {
 
 .btn-skip {
     background: #D97706;
-    color: #212529;
+    color: #ffffff;
 }
 
 .btn-skip:hover {
@@ -564,7 +584,7 @@ body {
         width: 100%;
     }
 
-    .btn-call, .btn-complete, .btn-serve, .btn-back .btn-skip {
+    .btn-call, .btn-complete, .btn-serve, .btn-unserve, .btn-back, .btn-skip {
         flex: 1;
         justify-content: center;
     }

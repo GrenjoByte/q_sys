@@ -314,23 +314,49 @@ class Sys_model extends CI_Model {
 		$transaction_class = $_POST['transaction_class'];
 		$priority_level    = $_POST['priority_level'];
 		$current_date      = date('Y-m-d');
+		$user_id           = $this->session->userdata('user_id');
 
-		$params   = [];
-		$params[] = $transaction_class;
-		$params[] = $priority_level;
-		$params[] = $current_date;
+		// Get the table assigned to this user
+		$table = $this->db->query(
+			"SELECT table_id FROM table_data WHERE user_id = ? AND table_status = 2 LIMIT 1",
+			[$user_id]
+		)->row();
 
-		$sql = "UPDATE transaction_data
-				SET transaction_status = 1
-				WHERE 
-					transaction_class        = ?
-					AND priority_level       = ?
-					AND transaction_schedule = ?
-					AND transaction_status   = 0
-				ORDER BY CAST(transaction_sequence AS UNSIGNED) ASC
-				LIMIT 1
-		";
-		$this->db->query($sql, $params);
+		if (!$table) {
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No table assigned to you.'
+			]);
+			exit;
+		}
+
+		// Check if there is an active transaction tied to this table
+		$active = $this->db->query(
+			"SELECT transaction_data_id FROM transaction_data
+			WHERE 
+				transaction_class        = ?
+				AND priority_level       = ?
+				AND transaction_schedule = ?
+				AND transaction_status   = 2
+				AND table_id             = ?
+			LIMIT 1",
+			[$transaction_class, $priority_level, $current_date, $table->table_id]
+		)->row();
+
+		if (!$active) {
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No active transaction found for your table.'
+			]);
+			exit;
+		}
+
+		$this->db->query(
+			"UPDATE transaction_data
+			SET transaction_status = 1
+			WHERE transaction_data_id = ?",
+			[$active->transaction_data_id]
+		);
 
 		if ($this->db->affected_rows() > 0) {
 			echo json_encode([
@@ -339,8 +365,8 @@ class Sys_model extends CI_Model {
 			]);
 		} else {
 			echo json_encode([
-				'status'  => 'empty',
-				'message' => 'No active transaction found.'
+				'status'  => 'error',
+				'message' => 'Failed to complete transaction. Please try again.'
 			]);
 		}
 		exit;
@@ -844,6 +870,82 @@ class Sys_model extends CI_Model {
 			echo json_encode([
 				'status'  => 'error',
 				'message' => 'Failed to skip transaction. Please try again.'
+			]);
+		}
+		exit;
+	}
+	public function unserve_client()
+	{
+		header('Content-Type: application/json');
+		date_default_timezone_set('Asia/Manila');
+
+		$transaction_class = $_POST['transaction_class'];
+		$priority_level    = $_POST['priority_level'];
+		$current_date      = date('Y-m-d');
+		$user_id           = $this->session->userdata('user_id');
+
+		// Get the table assigned to this user
+		$table = $this->db->query(
+			"SELECT table_id FROM table_data WHERE user_id = ? AND table_status = 2 LIMIT 1",
+			[$user_id]
+		)->row();
+
+		if (!$table) {
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No table assigned to you.'
+			]);
+			exit;
+		}
+
+		$params   = [];
+		$params[] = $transaction_class;
+		$params[] = $priority_level;
+		$params[] = $current_date;
+		$params[] = $table->table_id;
+
+		// Get the currently serving transaction for this table
+		$current = $this->db->query(
+			"SELECT transaction_data_id
+			FROM transaction_data
+			WHERE 
+				transaction_class        = ?
+				AND priority_level       = ?
+				AND transaction_schedule = ?
+				AND transaction_status   = 2
+				AND table_id             = ?
+			ORDER BY CAST(transaction_sequence AS UNSIGNED) ASC
+			LIMIT 1",
+			$params
+		)->row();
+
+		if (!$current) {
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No active transaction to unserve.'
+			]);
+			exit;
+		}
+
+		// Reset back to queue
+		$this->db->query(
+			"UPDATE transaction_data
+			SET 
+				transaction_status = 0,
+				table_id           = NULL
+			WHERE transaction_data_id = ?",
+			[$current->transaction_data_id]
+		);
+
+		if ($this->db->affected_rows() > 0) {
+			echo json_encode([
+				'status'  => 'success',
+				'message' => 'Client returned to queue.'
+			]);
+		} else {
+			echo json_encode([
+				'status'  => 'error',
+				'message' => 'Failed to unserve client. Please try again.'
 			]);
 		}
 		exit;

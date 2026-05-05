@@ -62,7 +62,8 @@
                         <button id="call_client_btn" class="btn btn-call"><i class="bi bi-megaphone"></i> Call Client</button>
                         <button id="complete_btn" class="btn btn-complete"><i class="bi bi-check2"></i> Complete</button>
                         <button id="serve_btn" class="btn btn-serve"><i class="bi bi-person-check"></i> Serve</button>
-                    </div>
+                        <button id="unserve_btn" class="btn btn-unserve"><i class="bi bi-person-x"></i> Unserve</button>
+                        </div>
                 </div>
                 <div class="queue-list-container">
                     <div id="queue_list" class="queue-list">
@@ -891,6 +892,43 @@ function init_skip_btn() {
         });
     });
 }
+function fetch_unserve_client() {
+    const priority_level    = document.getElementById('priority_level').value;
+    const transaction_class = document.getElementById('transaction_class').value;
+
+    fetch(base_url + 'i.php/sys_control/unserve_client', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            transaction_class: transaction_class_map[transaction_class],
+            priority_level:    priority_level_map[priority_level]
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            show_notification(data.message, 'success');
+            refresh_panel();
+        } else {
+            show_notification(data.message, 'warning');
+        }
+    })
+    .catch(() => {
+        show_notification('Network error. Please check your connection and try again.', 'warning');
+    });
+}
+
+function init_unserve_btn() {
+    const unserve_btn = document.getElementById('unserve_btn');
+    if (!unserve_btn) return;
+
+    unserve_btn.addEventListener('click', () => {
+        fetch_unserve_client();
+    });
+}
 
 
 
@@ -964,6 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
     init_skip_btn();
     init_call_client_btn();
     init_serve_btn();
+    init_unserve_btn();
     init_create_account();
 });
 

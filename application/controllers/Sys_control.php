@@ -135,4 +135,10 @@ class Sys_control extends CI_Controller
 		$this->load->model('sys_model');
 		$this->sys_model->skip_current_serving();
 	}
+	public function unserve_client()
+{
+		$this->require_login();
+		$this->load->model('sys_model');
+		$this->sys_model->unserve_client();
+}
 }
