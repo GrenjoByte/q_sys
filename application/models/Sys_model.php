@@ -181,63 +181,81 @@ class Sys_model extends CI_Model {
 
 	public function load_current_serving()
 	{
-		header('Content-Type: application/json');
-		date_default_timezone_set('Asia/Manila');
+	    header('Content-Type: application/json');
+	    date_default_timezone_set('Asia/Manila');
 
-		$transaction_class = $_POST['transaction_class'];
-		$priority_level    = $_POST['priority_level'];
-		$current_date      = date('Y-m-d');
+	    $transaction_class = $_POST['transaction_class'];
+	    $priority_level    = $_POST['priority_level'];
+	    $current_date      = date('Y-m-d');
+	    $user_id           = $this->session->userdata('user_id');
 
-		$params   = [];
-		$params[] = $transaction_class;
-		$params[] = $priority_level;
-		$params[] = $current_date;
+	    // Get the table assigned to this user
+	    $table = $this->db->query(
+	        "SELECT table_id FROM table_data WHERE user_id = ? AND table_status = 2 LIMIT 1",
+	        [$user_id]
+	    )->row();
 
-		$sql = "SELECT 
-					MIN(CAST(td.transaction_sequence AS UNSIGNED)) AS current_sequence,
-					td.transaction_class,
-					td.priority_level,
-					cd.first_name,
-					cd.middle_name,
-					cd.last_name
-				FROM transaction_data td
-				JOIN client_data cd ON cd.client_data_id = td.client_data_id
-				WHERE 
-					td.transaction_class        = ?
-					AND td.priority_level       = ?
-					AND td.transaction_schedule = ?
-					AND td.transaction_status   = 2
-				GROUP BY td.transaction_class, td.priority_level, cd.first_name, cd.middle_name, cd.last_name
-				ORDER BY MIN(CAST(td.transaction_sequence AS UNSIGNED))
-				LIMIT 1
-		";
-		$query = $this->db->query($sql, $params);
+	    if (!$table) {
+	        echo json_encode([
+	            'status'           => 'empty',
+	            'current_sequence' => null,
+	            'full_name'        => null
+	        ]);
+	        exit;
+	    }
 
-		$row              = $query->row();
-		$current_sequence = $row->current_sequence ?? null;
+	    $params   = [];
+	    $params[] = $transaction_class;
+	    $params[] = $priority_level;
+	    $params[] = $current_date;
+	    $params[] = $table->table_id;
 
-		if ($current_sequence === null) {
-			echo json_encode([
-				'status'           => 'empty',
-				'current_sequence' => null,
-				'full_name'        => null
-			]);
-		} else {
-			$full_name = trim(implode(' ', array_filter([
-				$row->first_name,
-				$row->middle_name,
-				$row->last_name
-			])));
+	    $sql = "SELECT 
+	                MIN(CAST(td.transaction_sequence AS UNSIGNED)) AS current_sequence,
+	                td.transaction_class,
+	                td.priority_level,
+	                cd.first_name,
+	                cd.middle_name,
+	                cd.last_name
+	            FROM transaction_data td
+	            JOIN client_data cd ON cd.client_data_id = td.client_data_id
+	            WHERE 
+	                td.transaction_class        = ?
+	                AND td.priority_level       = ?
+	                AND td.transaction_schedule = ?
+	                AND td.transaction_status   = 2
+	                AND td.table_id             = ?
+	            GROUP BY td.transaction_class, td.priority_level, cd.first_name, cd.middle_name, cd.last_name
+	            ORDER BY MIN(CAST(td.transaction_sequence AS UNSIGNED))
+	            LIMIT 1
+	    ";
+	    $query = $this->db->query($sql, $params);
 
-			echo json_encode([
-				'status'            => 'success',
-				'current_sequence'  => str_pad($current_sequence, 3, '0', STR_PAD_LEFT),
-				'transaction_class' => $row->transaction_class,
-				'priority_level'    => $row->priority_level,
-				'full_name'         => $full_name
-			]);
-		}
-		exit;
+	    $row              = $query->row();
+	    $current_sequence = $row->current_sequence ?? null;
+
+	    if ($current_sequence === null) {
+	        echo json_encode([
+	            'status'           => 'empty',
+	            'current_sequence' => null,
+	            'full_name'        => null
+	        ]);
+	    } else {
+	        $full_name = trim(implode(' ', array_filter([
+	            $row->first_name,
+	            $row->middle_name,
+	            $row->last_name
+	        ])));
+
+	        echo json_encode([
+	            'status'            => 'success',
+	            'current_sequence'  => str_pad($current_sequence, 3, '0', STR_PAD_LEFT),
+	            'transaction_class' => $row->transaction_class,
+	            'priority_level'    => $row->priority_level,
+	            'full_name'         => $full_name
+	        ]);
+	    }
+	    exit;
 	}
 	public function load_queue_list()
 	{
@@ -290,42 +308,59 @@ class Sys_model extends CI_Model {
 
 	public function complete_current_serving()
 	{
-		header('Content-Type: application/json');
-		date_default_timezone_set('Asia/Manila');
+	    header('Content-Type: application/json');
+	    date_default_timezone_set('Asia/Manila');
 
-		$transaction_class = $_POST['transaction_class'];
-		$priority_level    = $_POST['priority_level'];
-		$current_date      = date('Y-m-d');
+	    $transaction_class = $_POST['transaction_class'];
+	    $priority_level    = $_POST['priority_level'];
+	    $current_date      = date('Y-m-d');
+	    $user_id           = $this->session->userdata('user_id');
 
-		$params   = [];
-		$params[] = $transaction_class;
-		$params[] = $priority_level;
-		$params[] = $current_date;
+	    // Get the table assigned to this user
+	    $table = $this->db->query(
+	        "SELECT table_id FROM table_data WHERE user_id = ? AND table_status = 2 LIMIT 1",
+	        [$user_id]
+	    )->row();
 
-		$sql = "UPDATE transaction_data
-				SET transaction_status = 1
-				WHERE 
-					transaction_class        = ?
-					AND priority_level       = ?
-					AND transaction_schedule = ?
-					AND transaction_status   = 0
-				ORDER BY CAST(transaction_sequence AS UNSIGNED) ASC
-				LIMIT 1
-		";
-		$this->db->query($sql, $params);
+	    if (!$table) {
+	        echo json_encode([
+	            'status'  => 'empty',
+	            'message' => 'No table assigned to you.'
+	        ]);
+	        exit;
+	    }
 
-		if ($this->db->affected_rows() > 0) {
-			echo json_encode([
-				'status'  => 'success',
-				'message' => 'Transaction completed successfully.'
-			]);
-		} else {
-			echo json_encode([
-				'status'  => 'empty',
-				'message' => 'No active transaction found.'
-			]);
-		}
-		exit;
+	    $params   = [];
+	    $params[] = $transaction_class;
+	    $params[] = $priority_level;
+	    $params[] = $current_date;
+	    $params[] = $table->table_id;
+
+	    $sql = "UPDATE transaction_data
+	            SET transaction_status = 1
+	            WHERE 
+	                transaction_class        = ?
+	                AND priority_level       = ?
+	                AND transaction_schedule = ?
+	                AND transaction_status   = 2
+	                AND table_id             = ?
+	            ORDER BY CAST(transaction_sequence AS UNSIGNED) ASC
+	            LIMIT 1
+	    ";
+	    $this->db->query($sql, $params);
+
+	    if ($this->db->affected_rows() > 0) {
+	        echo json_encode([
+	            'status'  => 'success',
+	            'message' => 'Transaction completed successfully.'
+	        ]);
+	    } else {
+	        echo json_encode([
+	            'status'  => 'empty',
+	            'message' => 'No active transaction found.'
+	        ]);
+	    }
+	    exit;
 	}
 	public function load_recent_transactions()
 	{
@@ -412,108 +447,112 @@ class Sys_model extends CI_Model {
 	}
 	public function grab_client()
 	{
-		header('Content-Type: application/json');
-		date_default_timezone_set('Asia/Manila');
+	    header('Content-Type: application/json');
+	    date_default_timezone_set('Asia/Manila');
 
-		$transaction_class = $_POST['transaction_class'];
-		$priority_level    = $_POST['priority_level'];
-		$table_id          = $_POST['table_id'];
-		$user_id           = $this->session->userdata('user_id');
-		$current_date      = date('Y-m-d');
+	    $transaction_class = $_POST['transaction_class'];
+	    $priority_level    = $_POST['priority_level'];
+	    $table_id          = $_POST['table_id'];
+	    $user_id           = $this->session->userdata('user_id');
+	    $current_date      = date('Y-m-d');
 
-		$this->db->trans_start();
+	    // Block if this table is already serving a client
+	    $active = $this->db->query(
+	        "SELECT transaction_data_id FROM transaction_data
+	         WHERE table_id = ? AND transaction_status = 2 LIMIT 1",
+	        [$table_id]
+	    )->row();
 
-		// Get the next client in queue
-		$params   = [];
-		$params[] = $transaction_class;
-		$params[] = $priority_level;
-		$params[] = $current_date;
+	    if ($active) {
+	        echo json_encode([
+	            'status'  => 'error',
+	            'message' => 'Please complete the current transaction before serving a new client.'
+	        ]);
+	        exit;
+	    }
 
-		$sql = "SELECT 
-					td.transaction_data_id,
-					td.transaction_sequence,
-					td.transaction_type,
-					td.transaction_class,
-					td.priority_level,
-					cd.first_name,
-					cd.middle_name,
-					cd.last_name
-				FROM transaction_data td
-				JOIN client_data cd ON cd.client_data_id = td.client_data_id
-				WHERE 
-					td.transaction_class        = ?
-					AND td.priority_level       = ?
-					AND td.transaction_schedule = ?
-					AND td.transaction_status   = 0
-				ORDER BY CAST(td.transaction_sequence AS UNSIGNED) ASC
-				LIMIT 1
-				FOR UPDATE
-		";
-		$query = $this->db->query($sql, $params);
-		$row   = $query->row();
+	    $this->db->trans_start();
 
-		if (!$row) {
-			$this->db->trans_rollback();
-			echo json_encode([
-				'status'  => 'empty',
-				'message' => 'No clients in queue.'
-			]);
-			exit;
-		}
+	    $params   = [];
+	    $params[] = $transaction_class;
+	    $params[] = $priority_level;
+	    $params[] = $current_date;
 
-		// Mark as serving (status = 2) and assign table
-		$update_params   = [];
-		$update_params[] = $table_id;
-		$update_params[] = $row->transaction_data_id;
+	    $sql = "SELECT 
+	                td.transaction_data_id,
+	                td.transaction_sequence,
+	                td.transaction_type,
+	                td.transaction_class,
+	                td.priority_level,
+	                cd.first_name,
+	                cd.middle_name,
+	                cd.last_name
+	            FROM transaction_data td
+	            JOIN client_data cd ON cd.client_data_id = td.client_data_id
+	            WHERE 
+	                td.transaction_class        = ?
+	                AND td.priority_level       = ?
+	                AND td.transaction_schedule = ?
+	                AND td.transaction_status   = 0
+	                AND td.table_id             IS NULL
+	            ORDER BY CAST(td.transaction_sequence AS UNSIGNED) ASC
+	            LIMIT 1
+	            FOR UPDATE
+	    ";
+	    $query = $this->db->query($sql, $params);
+	    $row   = $query->row();
 
-		$sql = "UPDATE transaction_data
-				SET 
-					transaction_status = 2,
-					table_id           = ?
-				WHERE transaction_data_id = ?
-		";
-		$this->db->query($sql, $update_params);
+	    if (!$row) {
+	        $this->db->trans_rollback();
+	        echo json_encode([
+	            'status'  => 'empty',
+	            'message' => 'No clients available in queue.'
+	        ]);
+	        exit;
+	    }
 
-		// Tie the table to the current user
-		$table_params   = [];
-		$table_params[] = $user_id;
-		$table_params[] = $table_id;
+	    $update_params   = [];
+	    $update_params[] = $table_id;
+	    $update_params[] = $row->transaction_data_id;
 
-		$sql = "UPDATE table_data
-				SET 
-					table_status = 2,
-					user_id      = ?
-				WHERE table_id = ?
-		";
-		$this->db->query($sql, $table_params);
+	    $this->db->query(
+	        "UPDATE transaction_data
+	         SET transaction_status = 2, table_id = ?
+	         WHERE transaction_data_id = ?",
+	        $update_params
+	    );
 
-		$this->db->trans_complete();
+	    $this->db->query(
+	        "UPDATE table_data SET table_status = 2, user_id = ? WHERE table_id = ?",
+	        [$user_id, $table_id]
+	    );
 
-		if ($this->db->trans_status() === false) {
-			echo json_encode([
-				'status'  => 'error',
-				'message' => 'Failed to grab client. Please try again.'
-			]);
-			exit;
-		}
+	    $this->db->trans_complete();
 
-		$full_name = trim(implode(' ', array_filter([
-			$row->first_name,
-			$row->middle_name,
-			$row->last_name
-		])));
+	    if ($this->db->trans_status() === false) {
+	        echo json_encode([
+	            'status'  => 'error',
+	            'message' => 'Failed to grab client. Please try again.'
+	        ]);
+	        exit;
+	    }
 
-		echo json_encode([
-			'status'            => 'success',
-			'message'           => 'Client grabbed successfully.',
-			'current_sequence'  => str_pad($row->transaction_sequence, 3, '0', STR_PAD_LEFT),
-			'transaction_class' => $row->transaction_class,
-			'priority_level'    => $row->priority_level,
-			'full_name'         => $full_name
-		]);
-		exit;
+	    $full_name = trim(implode(' ', array_filter([
+	        $row->first_name,
+	        $row->middle_name,
+	        $row->last_name
+	    ])));
+
+	    echo json_encode([
+	        'status'            => 'success',
+	        'message'           => 'Client grabbed successfully.',
+	        'current_sequence'  => str_pad($row->transaction_sequence, 3, '0', STR_PAD_LEFT),
+	        'transaction_class' => $row->transaction_class,
+	        'priority_level'    => $row->priority_level,
+	        'full_name'         => $full_name
+	    ]);
+	    exit;
 	}
-
 	public function set_table_status()
 	{
 		header('Content-Type: application/json');
@@ -628,5 +667,70 @@ class Sys_model extends CI_Model {
 			'message' => 'Account created successfully.'
 		]);
 		exit;
+	}
+	public function save_control_preferences()
+	{
+	    header('Content-Type: application/json');
+
+	    $user_id          = $this->session->userdata('user_id');
+	    $priority_level   = $_POST['priority_level'];
+	    $transaction_class = $_POST['transaction_class'];
+	    $counter_window   = $_POST['counter_window'];
+	    $table_id         = $_POST['table_id'] ?? null;
+
+	    // Check if preferences already exist for this user
+	    $existing = $this->db->query(
+	        "SELECT user_id FROM user_preferences WHERE user_id = ? LIMIT 1",
+	        [$user_id]
+	    )->row();
+
+	    if ($existing) {
+	        $this->db->query(
+	            "UPDATE user_preferences 
+	             SET priority_level    = ?,
+	                 transaction_class = ?,
+	                 counter_window    = ?,
+	                 table_id          = ?
+	             WHERE user_id = ?",
+	            [$priority_level, $transaction_class, $counter_window, $table_id, $user_id]
+	        );
+	    } else {
+	        $this->db->query(
+	            "INSERT INTO user_preferences (user_id, priority_level, transaction_class, counter_window, table_id)
+	             VALUES (?, ?, ?, ?, ?)",
+	            [$user_id, $priority_level, $transaction_class, $counter_window, $table_id]
+	        );
+	    }
+
+	    echo json_encode(['status' => 'success']);
+	    exit;
+	}
+
+	public function load_control_preferences()
+	{
+	    header('Content-Type: application/json');
+
+	    $user_id = $this->session->userdata('user_id');
+
+	    $row = $this->db->query(
+	        "SELECT priority_level, transaction_class, counter_window, table_id
+	         FROM user_preferences
+	         WHERE user_id = ? LIMIT 1",
+	        [$user_id]
+	    )->row();
+
+	    if (!$row) {
+	        echo json_encode(['status' => 'empty']);
+	        exit;
+	    }
+
+	    echo json_encode([
+	        'status'           => 'success',
+	        'priority_level'   => $row->priority_level,
+	        'transaction_class'=> $row->transaction_class,
+	        'counter_window'   => $row->counter_window,
+	        'table_id'         => $row->table_id
+	    ]);
+	    exit;
 	}
 }

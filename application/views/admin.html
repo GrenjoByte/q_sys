@@ -291,6 +291,7 @@ function display_current_serving(data) {
         serving_number_el.textContent = '---';
         serving_name_el.textContent   = '---';
         serving_type_el.textContent   = '---';
+        set_controls_locked(false); // unlock when no client is being served
         return;
     }
 
@@ -316,6 +317,7 @@ function display_current_serving(data) {
     serving_number_el.textContent = queue_number;
     serving_name_el.textContent   = data.full_name || '---';
     serving_type_el.textContent   = transaction_label_map[class_key] || '---';
+    set_controls_locked(true); // lock when a client is being served
 }
 
 // ==================== QUEUE LIST ====================
@@ -400,6 +402,7 @@ function init_complete_btn() {
         .then(data => {
             if (data.status === 'success') {
                 show_notification(data.message, 'success');
+                set_controls_locked(false); // unlock after completion
                 refresh_panel();
             } else {
                 show_notification(data.message, 'warning');
@@ -412,47 +415,46 @@ function init_complete_btn() {
 }
 
 function init_call_client_btn() {
-        const call_client_btn = document.getElementById('call_client_btn');
-        if (!call_client_btn) return;
+    const call_client_btn = document.getElementById('call_client_btn');
+    if (!call_client_btn) return;
 
-        call_client_btn.addEventListener('click', () => {
-            const counter_window = document.getElementById('counter_window').value;
+    call_client_btn.addEventListener('click', () => {
+        const counter_window = document.getElementById('counter_window').value;
 
-            const serving_number = document.getElementById('serving_number').textContent.trim();
-            const serving_name   = document.getElementById('serving_name').textContent.trim();
+        const serving_number = document.getElementById('serving_number').textContent.trim();
+        const serving_name   = document.getElementById('serving_name').textContent.trim();
 
-            if (!serving_number || serving_number === '---') {
-                show_notification('No client currently being served.', 'warning');
-                return;
-            }
+        if (!serving_number || serving_number === '---') {
+            show_notification('No client currently being served.', 'warning');
+            return;
+        }
 
-            const priority_letter = serving_number.charAt(0).toUpperCase();
-            const priority_label  = priority_letter === 'P' ? 'priority number' : 'regular number';
+        const priority_letter = serving_number.charAt(0).toUpperCase();
+        const priority_label  = priority_letter === 'P' ? 'priority number' : 'regular number';
 
-            const announcement = `Now serving ${priority_label} ${serving_number}, please proceed to ${counter_window}.`;
+        const announcement = `Now serving ${priority_label} ${serving_number}, please proceed to ${counter_window}.`;
+        
+        function get_preferred_voice() {
+            const voices   = window.speechSynthesis.getVoices();
+            const filipino = voices.find(v =>
+                v.lang === 'fil-PH' ||
+                v.lang === 'tl-PH'  ||
+                v.name.toLowerCase().includes('filipino') ||
+                v.name.toLowerCase().includes('tagalog')
+            );
+            return filipino || voices.find(v => v.lang === 'en-US') || null;
+        }
 
-            
-            function get_preferred_voice() {
-                const voices   = window.speechSynthesis.getVoices();
-                const filipino = voices.find(v =>
-                    v.lang === 'fil-PH' ||
-                    v.lang === 'tl-PH'  ||
-                    v.name.toLowerCase().includes('filipino') ||
-                    v.name.toLowerCase().includes('tagalog')
-                );
-                return filipino || voices.find(v => v.lang === 'en-US') || null;
-            }
+        const utterance  = new SpeechSynthesisUtterance(announcement);
+        utterance.voice  = get_preferred_voice();
+        utterance.lang   = utterance.voice?.lang || 'en-US';
+        utterance.rate   = 0.7;
+        utterance.pitch  = 1;
 
-            const utterance  = new SpeechSynthesisUtterance(announcement);
-            utterance.voice  = get_preferred_voice();
-            utterance.lang   = utterance.voice?.lang || 'en-US';
-            utterance.rate   = 0.7;
-            utterance.pitch  = 1;
-
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
-        });
-    }
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+    });
+}
 
     function fetch_recent_transactions() {
     const priority_level    = document.getElementById('priority_level').value;
@@ -610,6 +612,14 @@ function display_table_options(data) {
 }
 
 function fetch_grab_client() {
+    const serving_number = document.getElementById('serving_number').textContent.trim();
+
+    // Block if already serving a client
+    if (serving_number && serving_number !== '---') {
+        // show_notification('Please complete the current transaction before serving a new client.', 'warning');
+        return Promise.resolve();
+    }
+
     const priority_level    = document.getElementById('priority_level').value;
     const transaction_class = document.getElementById('transaction_class').value;
     const counter_window_el = document.getElementById('counter_window');
@@ -658,9 +668,13 @@ function fetch_set_table_status() {
     const is_in_use         = selected_option.getAttribute('data-table-status') == 2;
     const is_mine           = selected_option.getAttribute('data-is-mine') == 1;
 
-    // Block if table is taken by another user
+    // Block silently if table is taken by another user
     if (is_in_use && !is_mine) {
-        show_notification('This table is currently in use by another user.', 'warning');
+        // Revert selection back to the user's own table
+        const my_table = Array.from(counter_window_el.options).find(opt => opt.getAttribute('data-is-mine') == 1);
+        if (my_table) {
+            counter_window_el.value = my_table.value;
+        }
         return Promise.resolve();
     }
 
@@ -677,7 +691,6 @@ function fetch_set_table_status() {
     .then(res => res.json())
     .then(data => {
         if (data.status === 'success') {
-            // Update data attributes on all options to reflect new ownership
             Array.from(counter_window_el.options).forEach(opt => {
                 opt.setAttribute('data-is-mine', '0');
             });
@@ -755,6 +768,104 @@ function init_create_account() {
     });
 }
 
+function save_control_preferences() {
+    const priority_level    = document.getElementById('priority_level').value;
+    const transaction_class = document.getElementById('transaction_class').value;
+    const counter_window    = document.getElementById('counter_window').value;
+    const counter_window_el = document.getElementById('counter_window');
+    const table_id          = counter_window_el.options[counter_window_el.selectedIndex]?.getAttribute('data-table-id');
+
+    fetch(base_url + 'i.php/sys_control/save_control_preferences', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            priority_level,
+            transaction_class,
+            counter_window,
+            table_id
+        })
+    });
+}
+
+function restore_control_preferences(data) {
+    if (!data || data.status === 'empty') return;
+
+    const priority_el = document.getElementById('priority_level');
+    const class_el    = document.getElementById('transaction_class');
+
+    if (data.priority_level)    priority_el.value = data.priority_level;
+    if (data.transaction_class) class_el.value    = data.transaction_class;
+
+    // counter_window is restored after table options are loaded
+}
+
+function fetch_control_preferences() {
+    return fetch(base_url + 'i.php/sys_control/load_control_preferences', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        restore_control_preferences(data);
+        return data;
+    })
+    .catch(() => null);
+}
+
+function set_controls_locked(locked) {
+    ['priority_level', 'transaction_class', 'counter_window'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        // el.disabled = locked;
+
+        if (locked) {
+            el.addEventListener('mousedown', warn_active_transaction);
+            el.addEventListener('touchstart', warn_active_transaction);
+        } else {
+            el.removeEventListener('mousedown', warn_active_transaction);
+            el.removeEventListener('touchstart', warn_active_transaction);
+        }
+    });
+
+    const serve_btn = document.getElementById('serve_btn');
+    if (serve_btn) {
+        // serve_btn.disabled = locked;
+
+        if (locked) {
+            serve_btn.addEventListener('click', warn_active_transaction);
+        } else {
+            serve_btn.removeEventListener('click', warn_active_transaction);
+        }
+    }
+}
+
+function warn_active_transaction(e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    show_notification('Please complete the current transaction first.', 'warning');
+}
+
+// Bind save to control changes
+['priority_level', 'transaction_class'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => {
+        save_control_preferences();
+        refresh_panel();
+    });
+});
+
+document.getElementById('counter_window')?.addEventListener('change', () => {
+    save_control_preferences();
+    fetch_set_table_status();
+    refresh_panel();
+});
+
 function refresh_panel() {
     fetch_current_serving();
     fetch_queue_list();
@@ -776,12 +887,21 @@ document.getElementById('logout_btn')?.addEventListener('dblclick', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetch_table_options().then(() => {
-        refresh_panel();
+    fetch_control_preferences().then(prefs => {
+        fetch_table_options().then(() => {
+            // Restore counter_window after table options are populated
+            if (prefs && prefs.counter_window) {
+                const counter_window_el = document.getElementById('counter_window');
+                const match = Array.from(counter_window_el.options).find(opt => opt.value === prefs.counter_window);
+                if (match) counter_window_el.value = prefs.counter_window;
+            }
+            fetch_set_table_status();
+            refresh_panel();
+        });
     });
     init_complete_btn();
     init_call_client_btn();
-    init_grab_client_btn();
+    init_serve_btn();
     init_create_account();
 });
 

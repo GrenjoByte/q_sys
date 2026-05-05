@@ -117,4 +117,17 @@ class Sys_control extends CI_Controller
 		$this->load->model('sys_model');
 		$this->sys_model->create_account();
 	}
+	public function save_control_preferences()
+	{
+	    $this->require_login();
+	    $this->load->model('sys_model');
+	    $this->sys_model->save_control_preferences();
+	}
+
+	public function load_control_preferences()
+	{
+	    $this->require_login();
+	    $this->load->model('sys_model');
+	    $this->sys_model->load_control_preferences();
+	}
 }
