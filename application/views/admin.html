@@ -42,12 +42,20 @@
         <div class="serving-number" id="serving_number">----</div>
         <div class="serving-name" id="serving_name">----</div>
         <div class="serving-type" id="serving_type">----</div>
-       <div class="action-buttons d-flex justify-content-center gap-3 mt-4">
-            <button id="back_btn" class="btn btn-back">
-                <i class="bi bi-arrow-left"></i> Back</button>                        
-            <button id="skip_btn" class="btn btn-skip">
-                <i class="bi bi-arrow-right"></i> Skip
-            </button>
+        <div class="d-flex justify-content-center mt-4">
+            <div class="btn-group" role="group">
+                <button id="back_btn" class="btn btn-back">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+
+                <button id="refresh_btn" class="btn btn-refresh">
+                    <i class="bi bi-arrow-repeat"></i>
+                </button>
+
+                <button id="skip_btn" class="btn btn-skip">
+                    Skip <i class="bi bi-arrow-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -930,6 +938,184 @@ function init_unserve_btn() {
     });
 }
 
+function init_back_btn() {
+    const back_btn = document.getElementById('back_btn');
+    if (!back_btn) return;
+
+    back_btn.addEventListener('click', () => {
+        const priority_level    = document.getElementById('priority_level').value;
+        const transaction_class = document.getElementById('transaction_class').value;
+
+        fetch(base_url + 'i.php/sys_control/serve_previous', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({
+                transaction_class: transaction_class_map[transaction_class],
+                priority_level:    priority_level_map[priority_level]
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                show_notification(data.message, 'success');
+                fetch_grab_previous(data.current_transaction_id, data.current_sequence).then(() => {
+                    refresh_panel();
+                });
+            } else {
+                show_notification(data.message, 'warning');
+            }
+        })
+        .catch(() => {
+            show_notification('Network error. Please check your connection and try again.', 'warning');
+        });
+    });
+}
+
+function fetch_grab_previous(exclude_id = null, max_sequence = null) {
+    const priority_level    = document.getElementById('priority_level').value;
+    const transaction_class = document.getElementById('transaction_class').value;
+    const counter_window_el = document.getElementById('counter_window');
+    const table_id          = counter_window_el.options[counter_window_el.selectedIndex].getAttribute('data-table-id');
+
+    const body = {
+        transaction_class: transaction_class_map[transaction_class],
+        priority_level:    priority_level_map[priority_level],
+        table_id:          table_id
+    };
+
+    if (exclude_id)   body.exclude_id   = exclude_id;
+    if (max_sequence) body.max_sequence  = max_sequence;
+
+    return fetch(base_url + 'i.php/sys_control/grab_previous', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams(body)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            display_current_serving(data);
+            fetch_queue_list();
+            show_notification(data.message, 'success');
+        } else {
+            show_notification(data.message, 'warning');
+        }
+    })
+    .catch(() => {
+        show_notification('Network error. Please check your connection and try again.', 'warning');
+    });
+}
+
+function fetch_refresh_serving() {
+    const priority_level    = document.getElementById('priority_level').value;
+    const transaction_class = document.getElementById('transaction_class').value;
+
+    fetch(base_url + 'i.php/sys_control/refresh_serving', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            transaction_class: transaction_class_map[transaction_class],
+            priority_level:    priority_level_map[priority_level]
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            show_notification(data.message, 'success');
+            refresh_panel();
+        } else {
+            show_notification(data.message, 'warning');
+        }
+    })
+    .catch(() => {
+        show_notification('Network error. Please check your connection and try again.', 'warning');
+    });
+}
+
+function init_refresh_btn() {
+    const refresh_btn = document.getElementById('refresh_btn');
+    if (!refresh_btn) return;
+
+    refresh_btn.addEventListener('click', () => {
+        fetch_refresh_serving();
+    });
+}
+
+// ==================== POLLING ====================
+
+let polling_interval = null;
+
+function start_polling(interval_ms = 5000) {
+    if (polling_interval) return; // prevent duplicate intervals
+
+    polling_interval = setInterval(() => {
+        refresh_panel();
+    }, interval_ms);
+}
+
+function stop_polling() {
+    if (polling_interval) {
+        clearInterval(polling_interval);
+        polling_interval = null;
+    }
+}
+
+// Pause polling when tab is not visible, resume when visible
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stop_polling();
+    } else {
+        refresh_panel(); // immediate refresh on tab focus
+        start_polling();
+    }
+});
+
+// ==================== SSE REAL-TIME ====================
+
+let sse_source = null;
+
+function start_sse() {
+    if (sse_source) sse_source.close();
+
+    sse_source = new EventSource(base_url + 'i.php/sys_control/sse_stream');
+
+    sse_source.addEventListener('queue_update', () => {
+        refresh_panel();
+    });
+
+    sse_source.addEventListener('error', () => {
+        sse_source.close();
+        sse_source = null;
+        // Fallback to polling if SSE fails
+        start_polling(5000);
+    });
+}
+
+function stop_sse() {
+    if (sse_source) {
+        sse_source.close();
+        sse_source = null;
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stop_sse();
+    } else {
+        start_sse();
+        refresh_panel();
+    }
+});
+
 
 
 
@@ -996,13 +1182,16 @@ document.addEventListener('DOMContentLoaded', () => {
             save_control_preferences();
             fetch_set_table_status();
             refresh_panel();
+            start_sse();
         });
     });
     init_complete_btn();
     init_skip_btn();
+    init_back_btn();
+    init_refresh_btn();
+    init_unserve_btn();
     init_call_client_btn();
     init_serve_btn();
-    init_unserve_btn();
     init_create_account();
 });
 

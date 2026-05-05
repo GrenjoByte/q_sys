@@ -140,5 +140,28 @@ class Sys_control extends CI_Controller
 		$this->require_login();
 		$this->load->model('sys_model');
 		$this->sys_model->unserve_client();
-}
+	}
+	public function serve_previous()
+	{
+		$this->require_login();
+		$this->load->model('sys_model');
+		$this->sys_model->serve_previous();
+	}
+	public function grab_previous()
+	{
+		$this->require_login();
+		$this->load->model('sys_model');
+		$this->sys_model->grab_previous();
+	}
+	public function refresh_serving()
+	{
+		$this->require_login();
+		$this->load->model('sys_model');
+		$this->sys_model->refresh_serving();
+	}
+	public function sse_stream()
+	{
+		$this->load->model('sys_model');
+		$this->sys_model->sse_stream();
+	}
 }

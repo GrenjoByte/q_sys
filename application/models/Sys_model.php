@@ -11,6 +11,15 @@ class Sys_model extends CI_Model {
 		$_SESSION['oljnAS78'] = '1998-03-21';
 		date_default_timezone_set('Asia/Manila');
 	}
+	private function broadcast_update()
+	{
+		// Touch a lightweight timestamp table to signal state change
+		$this->db->query(
+			"INSERT INTO sse_state (state_key, updated_at) 
+			VALUES ('queue', NOW()) 
+			ON DUPLICATE KEY UPDATE updated_at = NOW()"
+		);
+	}
 	public function load_system_datetime()
 	{
 		date_default_timezone_set('Asia/Manila');
@@ -177,6 +186,7 @@ class Sys_model extends CI_Model {
 			'client_data_id'       => $client_data_id,
 			'transaction_sequence' => $transaction_sequence,
 		]);
+		$this->broadcast_update();
 	}
 
 	public function load_current_serving()
@@ -369,6 +379,7 @@ class Sys_model extends CI_Model {
 				'message' => 'Failed to complete transaction. Please try again.'
 			]);
 		}
+		$this->broadcast_update();
 		exit;
 	}
 	public function load_recent_transactions()
@@ -612,6 +623,7 @@ class Sys_model extends CI_Model {
 			'priority_level'    => $row->priority_level,
 			'full_name'         => $full_name
 		]);
+		$this->broadcast_update();
 		exit;
 	}
 
@@ -668,6 +680,7 @@ class Sys_model extends CI_Model {
 				'message' => 'Failed to update table status.'
 			]);
 		}
+		$this->broadcast_update();
 		exit;
 	}
 	public function create_account()
@@ -872,6 +885,7 @@ class Sys_model extends CI_Model {
 				'message' => 'Failed to skip transaction. Please try again.'
 			]);
 		}
+		$this->broadcast_update();
 		exit;
 	}
 	public function unserve_client()
@@ -948,6 +962,367 @@ class Sys_model extends CI_Model {
 				'message' => 'Failed to unserve client. Please try again.'
 			]);
 		}
+		$this->broadcast_update();
 		exit;
+	}
+	
+	public function serve_previous()
+	{
+		header('Content-Type: application/json');
+		date_default_timezone_set('Asia/Manila');
+
+		$transaction_class = $_POST['transaction_class'];
+		$priority_level    = $_POST['priority_level'];
+		$current_date      = date('Y-m-d');
+		$user_id           = $this->session->userdata('user_id');
+
+		// Get the table assigned to this user
+		$table = $this->db->query(
+			"SELECT table_id FROM table_data WHERE user_id = ? AND table_status = 2 LIMIT 1",
+			[$user_id]
+		)->row();
+
+		if (!$table) {
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No table assigned to you.'
+			]);
+			exit;
+		}
+
+		$params   = [];
+		$params[] = $transaction_class;
+		$params[] = $priority_level;
+		$params[] = $current_date;
+		$params[] = $table->table_id;
+
+		// Get currently serving transaction
+		$current = $this->db->query(
+			"SELECT transaction_data_id, transaction_sequence
+			FROM transaction_data
+			WHERE 
+				transaction_class        = ?
+				AND priority_level       = ?
+				AND transaction_schedule = ?
+				AND transaction_status   = 2
+				AND table_id             = ?
+			ORDER BY CAST(transaction_sequence AS UNSIGNED) ASC
+			LIMIT 1",
+			$params
+		)->row();
+
+		if (!$current) {
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No active transaction to go back from.'
+			]);
+			exit;
+		}
+
+		// Reset current serving back to queue
+		$this->db->query(
+			"UPDATE transaction_data
+			SET transaction_status = 0, table_id = NULL
+			WHERE transaction_data_id = ?",
+			[$current->transaction_data_id]
+		);
+
+		echo json_encode([
+			'status'                 => 'success',
+			'message'                => 'Going back to previous client.',
+			'current_transaction_id' => $current->transaction_data_id,
+			'current_sequence'       => (int) $current->transaction_sequence
+		]);
+		$this->broadcast_update();
+		exit;
+	}
+	public function grab_previous()
+	{
+		header('Content-Type: application/json');
+		date_default_timezone_set('Asia/Manila');
+
+		$transaction_class = $_POST['transaction_class'];
+		$priority_level    = $_POST['priority_level'];
+		$table_id          = $_POST['table_id'];
+		$user_id           = $this->session->userdata('user_id');
+		$current_date      = date('Y-m-d');
+		$exclude_id        = $_POST['exclude_id']   ?? null;
+		$max_sequence      = $_POST['max_sequence'] ?? null;
+
+		// Block if this table is already serving a client
+		$active = $this->db->query(
+			"SELECT transaction_data_id FROM transaction_data
+			WHERE table_id = ? AND transaction_status = 2 LIMIT 1",
+			[$table_id]
+		)->row();
+
+		if ($active) {
+			echo json_encode([
+				'status'  => 'error',
+				'message' => 'Please complete the current transaction before going back.'
+			]);
+			exit;
+		}
+
+		$this->db->trans_start();
+
+		$params   = [];
+		$params[] = $transaction_class;
+		$params[] = $priority_level;
+		$params[] = $current_date;
+
+		$exclude_clause  = '';
+		$sequence_clause = '';
+
+		if ($exclude_id) {
+			$exclude_clause = 'AND td.transaction_data_id != ?';
+			$params[]       = $exclude_id;
+		}
+
+		if ($max_sequence) {
+			$sequence_clause = 'AND CAST(td.transaction_sequence AS UNSIGNED) < ?';
+			$params[]        = (int) $max_sequence;
+		}
+
+		// Grab the client with the highest sequence below current (previous)
+		$sql = "SELECT 
+					td.transaction_data_id,
+					td.transaction_sequence,
+					td.transaction_type,
+					td.transaction_class,
+					td.priority_level,
+					cd.first_name,
+					cd.middle_name,
+					cd.last_name
+				FROM transaction_data td
+				JOIN client_data cd ON cd.client_data_id = td.client_data_id
+				WHERE 
+					td.transaction_class        = ?
+					AND td.priority_level       = ?
+					AND td.transaction_schedule = ?
+					AND td.transaction_status   = 0
+					AND td.table_id             IS NULL
+					{$exclude_clause}
+					{$sequence_clause}
+				ORDER BY CAST(td.transaction_sequence AS UNSIGNED) DESC
+				LIMIT 1
+				FOR UPDATE
+		";
+		$query = $this->db->query($sql, $params);
+		$row   = $query->row();
+
+		// Wrap around to highest sequence if no previous found
+		if (!$row && $max_sequence) {
+			$wrap_params   = [];
+			$wrap_params[] = $transaction_class;
+			$wrap_params[] = $priority_level;
+			$wrap_params[] = $current_date;
+
+			$wrap_exclude = '';
+			if ($exclude_id) {
+				$wrap_exclude  = 'AND td.transaction_data_id != ?';
+				$wrap_params[] = $exclude_id;
+			}
+
+			$wrap_sql = "SELECT 
+							td.transaction_data_id,
+							td.transaction_sequence,
+							td.transaction_type,
+							td.transaction_class,
+							td.priority_level,
+							cd.first_name,
+							cd.middle_name,
+							cd.last_name
+						FROM transaction_data td
+						JOIN client_data cd ON cd.client_data_id = td.client_data_id
+						WHERE 
+							td.transaction_class        = ?
+							AND td.priority_level       = ?
+							AND td.transaction_schedule = ?
+							AND td.transaction_status   = 0
+							AND td.table_id             IS NULL
+							{$wrap_exclude}
+						ORDER BY CAST(td.transaction_sequence AS UNSIGNED) DESC
+						LIMIT 1
+						FOR UPDATE
+			";
+			$row = $this->db->query($wrap_sql, $wrap_params)->row();
+		}
+
+		if (!$row) {
+			$this->db->trans_rollback();
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No previous client available in queue.'
+			]);
+			exit;
+		}
+
+		$this->db->query(
+			"UPDATE transaction_data
+			SET transaction_status = 2, table_id = ?
+			WHERE transaction_data_id = ?",
+			[$table_id, $row->transaction_data_id]
+		);
+
+		$this->db->query(
+			"UPDATE table_data SET table_status = 2, user_id = ? WHERE table_id = ?",
+			[$user_id, $table_id]
+		);
+
+		$this->db->trans_complete();
+
+		if ($this->db->trans_status() === false) {
+			echo json_encode([
+				'status'  => 'error',
+				'message' => 'Failed to go back. Please try again.'
+			]);
+			exit;
+		}
+
+		$full_name = trim(implode(' ', array_filter([
+			$row->first_name,
+			$row->middle_name,
+			$row->last_name
+		])));
+
+		echo json_encode([
+			'status'            => 'success',
+			'message'           => 'Now serving previous client.',
+			'current_sequence'  => str_pad($row->transaction_sequence, 3, '0', STR_PAD_LEFT),
+			'transaction_class' => $row->transaction_class,
+			'priority_level'    => $row->priority_level,
+			'full_name'         => $full_name
+		]);
+		$this->broadcast_update();
+		exit;
+	}
+	public function refresh_serving()
+	{
+		header('Content-Type: application/json');
+		date_default_timezone_set('Asia/Manila');
+
+		$transaction_class = $_POST['transaction_class'];
+		$priority_level    = $_POST['priority_level'];
+		$current_date      = date('Y-m-d');
+		$user_id           = $this->session->userdata('user_id');
+
+		// Get the table assigned to this user
+		$table = $this->db->query(
+			"SELECT table_id FROM table_data WHERE user_id = ? AND table_status = 2 LIMIT 1",
+			[$user_id]
+		)->row();
+
+		if (!$table) {
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No table assigned to you.'
+			]);
+			exit;
+		}
+
+		$this->db->trans_start();
+
+		// Reset current serving back to queue if any
+		$this->db->query(
+			"UPDATE transaction_data
+			SET transaction_status = 0, table_id = NULL
+			WHERE 
+				transaction_status = 2
+				AND table_id       = ?",
+			[$table->table_id]
+		);
+
+		// Grab the lowest sequence unserved client
+		$row = $this->db->query(
+			"SELECT 
+				td.transaction_data_id,
+				td.transaction_sequence,
+				td.transaction_class,
+				td.priority_level,
+				cd.first_name,
+				cd.middle_name,
+				cd.last_name
+			FROM transaction_data td
+			JOIN client_data cd ON cd.client_data_id = td.client_data_id
+			WHERE 
+				td.transaction_class        = ?
+				AND td.priority_level       = ?
+				AND td.transaction_schedule = ?
+				AND td.transaction_status   = 0
+				AND td.table_id             IS NULL
+			ORDER BY CAST(td.transaction_sequence AS UNSIGNED) ASC
+			LIMIT 1
+			FOR UPDATE",
+			[$transaction_class, $priority_level, $current_date]
+		)->row();
+
+		if (!$row) {
+			$this->db->trans_rollback();
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No clients available in queue.'
+			]);
+			exit;
+		}
+
+		// Assign to this table
+		$this->db->query(
+			"UPDATE transaction_data
+			SET transaction_status = 2, table_id = ?
+			WHERE transaction_data_id = ?",
+			[$table->table_id, $row->transaction_data_id]
+		);
+
+		$this->db->trans_complete();
+
+		if ($this->db->trans_status() === false) {
+			echo json_encode([
+				'status'  => 'error',
+				'message' => 'Failed to refresh. Please try again.'
+			]);
+			exit;
+		}
+
+		echo json_encode([
+			'status'  => 'success',
+			'message' => 'Refreshed to lowest unserved client.'
+		]);
+		$this->broadcast_update();
+		exit;
+	}
+	public function sse_stream()
+	{
+		header('Content-Type: text/event-stream');
+		header('Cache-Control: no-cache');
+		header('X-Accel-Buffering: no');
+		header('Connection: keep-alive');
+
+		if (ob_get_level()) ob_end_clean();
+
+		session_write_close(); // release session lock so other requests aren't blocked
+
+		date_default_timezone_set('Asia/Manila');
+
+		$last_state = null;
+
+		while (true) {
+			$row = $this->db->query(
+				"SELECT updated_at FROM sse_state WHERE state_key = 'queue' LIMIT 1"
+			)->row();
+
+			$current_state = $row->updated_at ?? null;
+
+			if ($current_state !== $last_state) {
+				$last_state = $current_state;
+				echo "event: queue_update\n";
+				echo "data: " . json_encode(['timestamp' => $current_state]) . "\n\n";
+				flush();
+			}
+
+			if (connection_aborted()) break;
+
+			sleep(1);
+		}
 	}
 }
