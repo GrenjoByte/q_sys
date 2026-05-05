@@ -187,7 +187,7 @@ body {
     gap: 12px;
 }
 
-.btn-call, .btn-complete, .btn-refresh {
+.btn-call, .btn-complete, .btn-serve, .btn-back, .btn-skip {
     padding: 8px 20px;
     border-radius: 12px;
     font-size: 13px;
@@ -201,7 +201,7 @@ body {
 }
 
 .btn-call {
-    background: #10b981;
+    background: #16A34A;
     color: white;
 }
 
@@ -211,7 +211,7 @@ body {
 }
 
 .btn-complete {
-    background: #6c757d;
+    background: #10B981;
     color: white;
 }
 
@@ -220,13 +220,43 @@ body {
     transform: translateY(-2px);
 }
 
-.btn-refresh {
-    background: #2c5f8a;
+.btn-serve {
+    background: #2563EB;
     color: white;
 }
 
-.btn-refresh:hover {
+.btn-serve:hover {
     background: #1e4a6e;
+    transform: translateY(-2px);
+}
+
+.btn-back {
+    background: #6B7280;
+    color: white;
+}
+
+.btn-back:hover {
+    background: #4B5563;
+    transform: translateY(-2px);
+}
+
+.btn-skip {
+    background: #D97706;
+    color: #212529;
+}
+
+.btn-skip:hover {
+    background: #B45309;
+    transform: translateY(-2px);
+}
+
+.btn-back {
+    background: #6c757d;
+    color: #ffffff;
+}
+
+.btn-back:hover {
+    background: #5a6268;
     transform: translateY(-2px);
 }
 
@@ -534,7 +564,7 @@ body {
         width: 100%;
     }
 
-    .btn-call, .btn-complete, .btn-refresh {
+    .btn-call, .btn-complete, .btn-serve, .btn-back .btn-skip {
         flex: 1;
         justify-content: center;
     }

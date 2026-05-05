@@ -55,7 +55,6 @@ class Sys_control extends CI_Controller
 	}
 	public function insert_new_transaction()
 	{
-		$this->require_login();
 		$this->load->model('sys_model');	
 		$this->sys_model->insert_new_transaction();
 	}
@@ -129,5 +128,11 @@ class Sys_control extends CI_Controller
 	    $this->require_login();
 	    $this->load->model('sys_model');
 	    $this->sys_model->load_control_preferences();
+	}
+	public function skip_current_serving()
+	{
+		$this->require_login();
+		$this->load->model('sys_model');
+		$this->sys_model->skip_current_serving();
 	}
 }

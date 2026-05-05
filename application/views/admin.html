@@ -42,6 +42,13 @@
         <div class="serving-number" id="serving_number">----</div>
         <div class="serving-name" id="serving_name">----</div>
         <div class="serving-type" id="serving_type">----</div>
+       <div class="action-buttons d-flex justify-content-center gap-3 mt-4">
+            <button id="back_btn" class="btn btn-back">
+                <i class="bi bi-arrow-left"></i> Back</button>                        
+            <button id="skip_btn" class="btn btn-skip">
+                <i class="bi bi-arrow-right"></i> Skip
+            </button>
+        </div>
     </div>
 
     <div class="row g-4 mb-4">
@@ -49,12 +56,12 @@
         <!-- Queue List Panel -->
         <div class="col-12 col-lg-7">
             <div class="queue-panel-left">
-                <div class="panel-header">
+                <div class="panel-header d-flex">
                     <h3><i class="bi bi-list-ul"></i> Waiting Queue</h3>
-                    <div class="action-buttons">
-                        <button id="call_client_btn" class="btn-call"><i class="bi bi-megaphone"></i> Call Client</button>
-                        <button id="complete_btn" class="btn-complete"><i class="bi bi-check2"></i> Complete</button>
-                        <button id="serve_btn" class="btn-refresh"><i class="bi bi-person-check"></i> Serve</button>
+                    <div class="action-buttons d-flex gap-2">
+                        <button id="call_client_btn" class="btn btn-call"><i class="bi bi-megaphone"></i> Call Client</button>
+                        <button id="complete_btn" class="btn btn-complete"><i class="bi bi-check2"></i> Complete</button>
+                        <button id="serve_btn" class="btn btn-serve"><i class="bi bi-person-check"></i> Serve</button>
                     </div>
                 </div>
                 <div class="queue-list-container">
@@ -432,7 +439,7 @@ function init_call_client_btn() {
         const priority_letter = serving_number.charAt(0).toUpperCase();
         const priority_label  = priority_letter === 'P' ? 'priority number' : 'regular number';
 
-        const announcement = `Now serving ${priority_label} ${serving_number}, please proceed to ${counter_window}.`;
+        const announcement = `Now serving ${priority_label} ${serving_number}, please proceed to table ${counter_window}.`;
         
         function get_preferred_voice() {
             const voices   = window.speechSynthesis.getVoices();
@@ -611,19 +618,20 @@ function display_table_options(data) {
     });
 }
 
-function fetch_grab_client() {
-    const serving_number = document.getElementById('serving_number').textContent.trim();
-
-    // Block if already serving a client
-    if (serving_number && serving_number !== '---') {
-        // show_notification('Please complete the current transaction before serving a new client.', 'warning');
-        return Promise.resolve();
-    }
-
+function fetch_grab_client(exclude_id = null, min_sequence = null) {
     const priority_level    = document.getElementById('priority_level').value;
     const transaction_class = document.getElementById('transaction_class').value;
     const counter_window_el = document.getElementById('counter_window');
     const table_id          = counter_window_el.options[counter_window_el.selectedIndex].getAttribute('data-table-id');
+
+    const body = {
+        transaction_class: transaction_class_map[transaction_class],
+        priority_level:    priority_level_map[priority_level],
+        table_id:          table_id
+    };
+
+    if (exclude_id)    body.exclude_id    = exclude_id;
+    if (min_sequence)  body.min_sequence  = min_sequence;
 
     return fetch(base_url + 'i.php/sys_control/grab_client', {
         method: 'POST',
@@ -631,11 +639,7 @@ function fetch_grab_client() {
             'Content-Type': 'application/x-www-form-urlencoded',
             'X-Requested-With': 'XMLHttpRequest'
         },
-        body: new URLSearchParams({
-            transaction_class: transaction_class_map[transaction_class],
-            priority_level:    priority_level_map[priority_level],
-            table_id:          table_id
-        })
+        body: new URLSearchParams(body)
     })
     .then(res => res.json())
     .then(data => {
@@ -852,6 +856,63 @@ function warn_active_transaction(e) {
     show_notification('Please complete the current transaction first.', 'warning');
 }
 
+function init_skip_btn() {
+    const skip_btn = document.getElementById('skip_btn');
+    if (!skip_btn) return;
+
+    skip_btn.addEventListener('click', () => {
+        const priority_level    = document.getElementById('priority_level').value;
+        const transaction_class = document.getElementById('transaction_class').value;
+
+        fetch(base_url + 'i.php/sys_control/skip_current_serving', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({
+                transaction_class: transaction_class_map[transaction_class],
+                priority_level:    priority_level_map[priority_level]
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                show_notification(data.message, 'success');
+                fetch_grab_client(data.skipped_transaction_id, data.skipped_sequence).then(() => {
+                    refresh_panel();
+                });
+            } else {
+                show_notification(data.message, 'warning');
+            }
+        })
+        .catch(() => {
+            show_notification('Network error. Please check your connection and try again.', 'warning');
+        });
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Bind save to control changes
 ['priority_level', 'transaction_class'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', () => {
@@ -889,17 +950,18 @@ document.getElementById('logout_btn')?.addEventListener('dblclick', () => {
 document.addEventListener('DOMContentLoaded', () => {
     fetch_control_preferences().then(prefs => {
         fetch_table_options().then(() => {
-            // Restore counter_window after table options are populated
             if (prefs && prefs.counter_window) {
                 const counter_window_el = document.getElementById('counter_window');
                 const match = Array.from(counter_window_el.options).find(opt => opt.value === prefs.counter_window);
                 if (match) counter_window_el.value = prefs.counter_window;
             }
+            save_control_preferences();
             fetch_set_table_status();
             refresh_panel();
         });
     });
     init_complete_btn();
+    init_skip_btn();
     init_call_client_btn();
     init_serve_btn();
     init_create_account();
