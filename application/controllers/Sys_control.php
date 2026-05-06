@@ -164,4 +164,9 @@ class Sys_control extends CI_Controller
 		$this->load->model('sys_model');
 		$this->sys_model->sse_stream();
 	}
+		public function update_transaction()
+	{
+		$this->load->model('sys_model');
+		$this->sys_model->update_transaction();
+	}
 }

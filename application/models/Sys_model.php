@@ -108,6 +108,7 @@ class Sys_model extends CI_Model {
 		// Check if a client with same name and birthdate already has a transaction today
 		$existing = $this->db->query(
 			"SELECT 
+				td.transaction_data_id,
 				td.transaction_sequence,
 				td.transaction_class,
 				td.priority_level,
@@ -115,9 +116,9 @@ class Sys_model extends CI_Model {
 			FROM transaction_data td
 			JOIN client_data cd ON cd.client_data_id = td.client_data_id
 			WHERE 
-				cd.first_name           = ?
-				AND cd.last_name        = ?
-				AND cd.birthdate        = ?
+				cd.first_name               = ?
+				AND cd.last_name            = ?
+				AND cd.birthdate            = ?
 				AND td.transaction_schedule = ?
 				AND td.transaction_status   NOT IN (1)
 			ORDER BY td.transaction_data_id DESC
@@ -125,27 +126,27 @@ class Sys_model extends CI_Model {
 			[$first_name, $last_name, $birthdate, $transaction_schedule]
 		)->row();
 
-		if ($existing) {
-			$priority_map = [1 => 'priority', 2 => 'regular'];
-			$class_map    = [
-				1 => ['prefix' => 'R'],
-				2 => ['prefix' => 'U'],
-				3 => ['prefix' => 'P'],
-				4 => ['prefix' => 'I']
-			];
+			// In insert_new_transaction duplicate check, add transaction_data_id to response:
+	if ($existing) {
+		$priority_prefix = $existing->priority_level == 1 ? 'P' : 'R';
+		$class_map       = [
+			1 => ['prefix' => 'R'],
+			2 => ['prefix' => 'U'],
+			3 => ['prefix' => 'P'],
+			4 => ['prefix' => 'I']
+		];
+		$type_prefix   = $class_map[$existing->transaction_class]['prefix'] ?? 'R';
+		$sequence      = str_pad($existing->transaction_sequence, 3, '0', STR_PAD_LEFT);
+		$existing_code = "{$priority_prefix}:{$type_prefix}-{$sequence}";
 
-			$priority_prefix  = $existing->priority_level == 1 ? 'P' : 'R';
-			$type_prefix      = $class_map[$existing->transaction_class]['prefix'] ?? 'R';
-			$sequence         = str_pad($existing->transaction_sequence, 3, '0', STR_PAD_LEFT);
-			$existing_code    = "{$priority_prefix}:{$type_prefix}-{$sequence}";
-
-			echo json_encode([
-				'status'           => 'duplicate',
-				'message'          => 'You already have an existing appointment today.',
-				'transaction_code' => $existing_code
-			]);
-			exit;
-		}
+		echo json_encode([
+			'status'              => 'duplicate',
+			'message'             => 'You already have an existing appointment today.',
+			'transaction_code'    => $existing_code,
+			'transaction_data_id' => $existing->transaction_data_id
+		]);
+		exit;
+	}
 
 		$params = [];
 		$params[] = $transaction_class;
@@ -221,6 +222,56 @@ class Sys_model extends CI_Model {
 			'client_data_id'       => $client_data_id,
 			'transaction_sequence' => $transaction_sequence
 		]);
+	}
+	public function update_transaction()
+	{
+		header('Content-Type: application/json');
+
+		$transaction_data_id  = $_POST['transaction_data_id'];
+		$transaction_class    = $_POST['transaction_class'];
+		$priority_level       = $_POST['priority_level'];
+		$transaction_schedule = $_POST['transaction_schedule'];
+
+		// Only allow update if transaction is still pending
+		$check = $this->db->query(
+			"SELECT transaction_data_id, transaction_status
+			FROM transaction_data
+			WHERE transaction_data_id = ? AND transaction_status = 0
+			LIMIT 1",
+			[$transaction_data_id]
+		)->row();
+
+		if (!$check) {
+			echo json_encode([
+				'success' => false,
+				'message' => 'This transaction can no longer be updated.'
+			]);
+			exit;
+		}
+
+		$this->db->query(
+			"UPDATE transaction_data
+			SET 
+				transaction_class    = ?,
+				priority_level       = ?,
+				transaction_schedule = ?
+			WHERE transaction_data_id = ?",
+			[$transaction_class, $priority_level, $transaction_schedule, $transaction_data_id]
+		);
+
+		if ($this->db->affected_rows() > 0) {
+			$this->broadcast_update();
+			echo json_encode([
+				'success' => true,
+				'message' => 'Transaction updated successfully.'
+			]);
+		} else {
+			echo json_encode([
+				'success' => false,
+				'message' => 'No changes were made.'
+			]);
+		}
+		exit;
 	}
 	public function load_current_serving()
 	{
