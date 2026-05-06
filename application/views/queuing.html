@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSA Queuing System | Philippine Statistics Authority</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>PSA Samar Queuing System | Philippine Statistics Authority</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -126,8 +126,8 @@
             <form id="personal_form">
                 <div class="form-section">
                     <h3><i class="bi bi-person-badge"></i> PERSONAL INFORMATION</h3>
-                    <div class="form-group"><label>REGISTRANT FULL NAME</label><div class="name-fields"><input type="text" id="first_name" placeholder="First Name" required><input type="text" id="middle_name" placeholder="Middle Name"><input type="text" id="last_name" placeholder="Last Name" required></div></div>
-                    <div class="form-row"><div class="form-group"><label>GENDER</label><select id="gender" required><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div><div class="form-group"><label>BIRTHDATE</label><input type="date" id="birthdate" required></div></div>
+                    <div class="form-group"><label>REGISTRANT FULL NAME*</label><div class="name-fields"><input type="text" id="first_name" placeholder="First Name" required><input type="text" id="middle_name" placeholder="Middle Name (Optional)"><input type="text" id="last_name" placeholder="Last Name" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>GENDER*</label><select id="gender" required><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div><div class="form-group"><label>BIRTHDATE*</label><input type="date" id="birthdate" required></div></div>
                     <div class="form-row"><div class="form-group"><label>MOBILE NUMBER <span class="optional">(Optional)</span></label><input type="tel" id="mobile_number" placeholder="09XXXXXXXXX"></div><div class="form-group"><label>EMAIL ADDRESS <span class="optional">(Optional)</span></label><input type="email" id="email_address" placeholder="email@example.com"></div></div>
                 </div>
                 <div class="form-navigation"><button type="button" class="nav-btn back-btn" id="back_to_service_btn"><i class="bi bi-arrow-left"></i> Back</button><button type="submit" class="nav-btn next-btn">Next: Service Details <i class="bi bi-arrow-right"></i></button></div>
@@ -187,23 +187,77 @@
     </div>
 </div>
 
+<div class="modal fade" id="duplicate_modal" tabindex="-1" aria-labelledby="duplicate_modal_label" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content duplicate-modal-content">
+            <div class="duplicate-modal-header">
+                <div class="duplicate-modal-icon">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <h5 class="duplicate-modal-title" id="duplicate_modal_label">Existing Appointment Found</h5>
+            </div>
+            <div class="duplicate-modal-body">
+                <p class="duplicate-modal-message">You already have an existing appointment for this schedule.</p>
+                <div class="duplicate-queue-preview">
+                    <div class="duplicate-queue-row">
+                        <div class="duplicate-queue-col">
+                            <span class="duplicate-preview-label"><i class="bi bi-ticket-perforated me-1"></i>Current Number</span>
+                            <span class="duplicate-preview-number" id="duplicate_code">---</span>
+                        </div>
+                        <div class="duplicate-queue-arrow" id="duplicate_arrow" style="display:none;">
+                            <i class="bi bi-arrow-right-circle-fill"></i>
+                        </div>
+                        <div class="duplicate-queue-col" id="duplicate_new_col" style="display:none;">
+                            <span class="duplicate-preview-label"><i class="bi bi-ticket-perforated-fill me-1"></i>New Number</span>
+                            <span class="duplicate-preview-number duplicate-preview-number--new" id="duplicate_new_code">---</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="duplicate-modal-sub">Would you like to keep your existing appointment or update your transaction details?</p>
+            </div>
+            <div class="duplicate-modal-footer">
+                <button id="duplicate_keep_btn" class="duplicate-btn duplicate-btn-secondary">
+                    <i class="bi bi-check-circle"></i> Keep Existing
+                </button>
+                <button id="duplicate_update_btn" class="duplicate-btn duplicate-btn-primary">
+                    <i class="bi bi-pencil-square"></i> Update Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-
 // ==================== GLOBAL VARIABLES ====================
 const base_url = "<?php echo base_url(); ?>";
-let selected_service = null;
+let selected_service     = null;
 let current_queue_number = null;
-let current_queue_data = null;
-let current_date = null;
-let polling_interval = null;
+let current_queue_data   = null;
+let current_date         = null;
+let current_time         = null;
+let previous_month       = null;
+let polling_interval     = null;
+
+// ==================== MAPS ====================
+const type_map = {
+    1: { prefix: 'R', value: 1, label: 'Registration',        req_key: 'registration' },
+    2: { prefix: 'U', value: 2, label: 'Updating/Correction', req_key: 'update'       },
+    3: { prefix: 'P', value: 3, label: 'Paper Form',          req_key: 'paper_form'   },
+    4: { prefix: 'I', value: 4, label: 'Inquiry',             req_key: 'inquiry'      }
+};
+
+const priority_map = {
+    'priority': 'P',
+    'regular':  'R'
+};
 
 // ==================== HELPER FUNCTIONS ====================
 function show_notification(message, type) {
     const notification = document.createElement('div');
-    notification.style.cssText = 'position:fixed;top:20px;right:20px;z-index:1000;background:white;box-shadow:0 4px 12px rgba(0,0,0,0.15);border-radius:12px;padding:12px 20px;';
+    notification.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;background:white;box-shadow:0 4px 12px rgba(0,0,0,0.15);border-radius:12px;padding:12px 20px;';
     notification.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}" style="color:${type === 'success' ? '#10b981' : '#f59e0b'}"></i><span>${message}</span></div>`;
     document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), 3000);
+    setTimeout(() => notification.remove(), 5000);
 }
 
 function set_loading(btn_el, is_loading) {
@@ -219,145 +273,144 @@ function set_loading(btn_el, is_loading) {
 
 // ==================== SCREEN NAVIGATION ====================
 function show_screen(screen_id) {
-    ['service_selection_screen', 'personal_info_screen', 'service_details_screen']
-        .forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
-    document.getElementById(screen_id).classList.add('active');
+    ['service_selection_screen', 'personal_info_screen', 'service_details_screen', 'queue_status_screen']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('active');
+        });
+    const target = document.getElementById(screen_id);
+    if (target) target.classList.add('active');
 }
 
 // ==================== MODAL FUNCTIONS ====================
 function show_success_modal(queue_number, full_name, transaction_label, type_prefix) {
-    document.getElementById('modal_message').textContent = `Thank you ${full_name || 'Customer'}! Please save your queue number.`;
+    document.getElementById('modal_message').textContent    = `Thank you ${full_name || 'Customer'}! Please save your queue number.`;
     document.getElementById('modal_queue_number').textContent = queue_number;
-    document.getElementById('modal_queue_type').textContent = `${transaction_label} (${type_prefix})`;
+    document.getElementById('modal_queue_type').textContent   = `${transaction_label} (${type_prefix})`;
     current_queue_data = { queue_number, full_name, transaction_label, type_prefix };
     document.getElementById('success_modal').classList.add('active');
 }
-function hide_success_modal() { document.getElementById('success_modal').classList.remove('active'); }
+function hide_success_modal()       { document.getElementById('success_modal').classList.remove('active'); }
 
 function show_confirmation_modal() {
     document.getElementById('preview_queue_number').textContent = current_queue_data?.queue_number || '---';
     document.getElementById('confirmation_modal').classList.add('active');
 }
-function hide_confirmation_modal() { document.getElementById('confirmation_modal').classList.remove('active'); }
+function hide_confirmation_modal()  { document.getElementById('confirmation_modal').classList.remove('active'); }
+
+function show_duplicate_modal(transaction_code, transaction_data_id, full_name, transaction_class, service_type, personal_data, type_prefix, priority_prefix, transaction_label) {
+    const modal_el       = document.getElementById('duplicate_modal');
+    const code_el        = document.getElementById('duplicate_code');
+    const new_code_el    = document.getElementById('duplicate_new_code');
+    const new_col_el     = document.getElementById('duplicate_new_col');
+    const arrow_el       = document.getElementById('duplicate_arrow');
+    const keep_btn       = document.getElementById('duplicate_keep_btn');
+    const update_btn     = document.getElementById('duplicate_update_btn');
+    const modal_sub      = modal_el.querySelector('.duplicate-modal-sub');
+
+    if (!modal_el) {
+        show_notification(`You already have an existing appointment. Queue number: ${transaction_code}`, 'warning');
+        return;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modal_el);
+
+    code_el.textContent      = transaction_code;
+    new_col_el.style.display = 'none';
+    arrow_el.style.display   = 'none';
+    new_code_el.textContent  = '---';
+    modal_sub.textContent    = 'Would you like to keep your existing appointment or update your transaction details?';
+    modal_el.querySelector('#duplicate_code').closest('.duplicate-queue-col')
+    .querySelector('.duplicate-preview-label').innerHTML = 
+    '<i class="bi bi-ticket-perforated me-1"></i>Current Number';
+    keep_btn.disabled        = false;
+    update_btn.disabled      = false;
+    update_btn.innerHTML     = '<i class="bi bi-pencil-square"></i> Update Details';
+
+    modal.show();
+
+    keep_btn.onclick = () => {
+        modal.hide();
+        show_success_modal(transaction_code, full_name, transaction_label, type_prefix);
+    };
+
+    update_btn.onclick = () => {
+        keep_btn.disabled    = true;
+        update_btn.disabled  = true;
+        update_btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> Updating...`;
+
+        update_transaction(transaction_data_id, transaction_class, service_type)
+        .then(response => {
+            if (response.success) {
+                const old_sequence     = transaction_code.split('-').pop();
+                const new_queue_number = `${priority_prefix}:${type_prefix}-${old_sequence}`;
+
+                new_code_el.textContent  = new_queue_number;
+                new_col_el.style.display = 'block';
+                arrow_el.style.display   = 'block';
+                modal_sub.textContent    = 'Your transaction details have been updated.';
+
+                // Update label from "Current Number" to "Previous Number"
+                modal_el.querySelector('#duplicate_code').closest('.duplicate-queue-col')
+                    .querySelector('.duplicate-preview-label').innerHTML = 
+                    '<i class="bi bi-ticket-perforated me-1"></i>Previous Number';
+
+                keep_btn.style.display   = 'none';
+                update_btn.disabled      = false;
+                update_btn.innerHTML     = '<i class="bi bi-check-circle"></i> Done';
+
+                update_btn.onclick = () => {
+                    modal.hide();
+                    keep_btn.style.display = '';
+                    show_success_modal(new_queue_number, full_name, transaction_label, type_prefix);
+                };
+            } else {
+                keep_btn.disabled    = false;
+                update_btn.disabled  = false;
+                update_btn.innerHTML = '<i class="bi bi-pencil-square"></i> Update Details';
+                show_notification(response.message || 'Update failed. Please try again.', 'warning');
+            }
+        })
+        .catch(() => {
+            keep_btn.disabled    = false;
+            update_btn.disabled  = false;
+            update_btn.innerHTML = '<i class="bi bi-pencil-square"></i> Update Details';
+            show_notification('Network error. Please check your connection and try again.', 'warning');
+        });
+    };
+}
+
+function update_transaction(transaction_data_id, transaction_class, service_type) {
+    const priority_level_map = { 'priority': 1, 'regular': 2 };
+
+    return fetch(base_url + 'i.php/sys_control/update_transaction', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams({
+            transaction_data_id:  transaction_data_id,
+            transaction_class:    transaction_class,
+            priority_level:       priority_level_map[service_type] || 2,
+            transaction_schedule: current_date
+        })
+    })
+    .then(res => res.json());
+}
 
 // ==================== REQUIREMENTS DATA ====================
 const requirements_data = {
-    registration: `
-        <div class="req-section">
-            <h3 class="req-main-title"><i class="bi bi-id-card"></i> NATIONAL ID REGISTRATION REQUIREMENTS</h3>
-            <div class="age-group">
-                <h4><i class="bi bi-1-circle-fill"></i> 1-4 years old</h4>
-                <ul>
-                    <li><i class="bi bi-check2-circle"></i> Certificate of Live Birth (PSA/NSO/LCR copy)</li>
-                    <li><i class="bi bi-check2-circle"></i> National ID (PVC/Paper Form/Digital version) of Parents or Guardian</li>
-                </ul>
-            </div>
-            <div class="age-group">
-                <h4><i class="bi bi-2-circle-fill"></i> 5-17 years old</h4>
-                <p class="req-note-text">Present at least 1 or 2 documents of the following requirements:</p>
-                <ul>
-                    <li><i class="bi bi-check2-circle"></i> Certificate of Live Birth (PSA/NSO/LCR copy)</li>
-                    <li><i class="bi bi-check2-circle"></i> School ID</li>
-                    <li><i class="bi bi-check2-circle"></i> If PSA, NSO, and LCR Live Birth are unavailable, present Brgy. Certification with 2x2 ID picture.</li>
-                </ul>
-            </div>
-            <div class="age-group">
-                <h4><i class="bi bi-3-circle-fill"></i> 18 above</h4>
-                <p class="req-note-text">Present at least 1 or 2 documents of the following requirements:</p>
-                <div class="two-columns">
-                    <ul>
-                        <li><i class="bi bi-check2-circle"></i> Passport</li>
-                        <li><i class="bi bi-check2-circle"></i> Driver's License</li>
-                        <li><i class="bi bi-check2-circle"></i> UMID ID</li>
-                        <li><i class="bi bi-check2-circle"></i> PRC ID</li>
-                        <li><i class="bi bi-check2-circle"></i> Voter's ID/Voter's Certificate</li>
-                        <li><i class="bi bi-check2-circle"></i> PhilHealth ID</li>
-                        <li><i class="bi bi-check2-circle"></i> TIN ID</li>
-                        <li><i class="bi bi-check2-circle"></i> Postal ID</li>
-                    </ul>
-                    <ul>
-                        <li><i class="bi bi-check2-circle"></i> Old SSS ID</li>
-                        <li><i class="bi bi-check2-circle"></i> NBI Clearance</li>
-                        <li><i class="bi bi-check2-circle"></i> Police Clearance</li>
-                        <li><i class="bi bi-check2-circle"></i> Certificate of Live Birth (PSA/NSO/LCR copy)</li>
-                        <li><i class="bi bi-check2-circle"></i> Certificate of Marriage (if married)</li>
-                        <li><i class="bi bi-check2-circle"></i> 4P's ID</li>
-                        <li><i class="bi bi-check2-circle"></i> Solo Parent ID</li>
-                        <li><i class="bi bi-check2-circle"></i> PWD ID</li>
-                    </ul>
-                </div>
-                <div class="additional-ids">
-                    <ul>
-                        <li><i class="bi bi-check2-circle"></i> Employee ID</li>
-                        <li><i class="bi bi-check2-circle"></i> Brgy. ID</li>
-                    </ul>
-                </div>
-                <div class="brgy-note">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <strong>Brgy Certification with 2x2 ID picture</strong> must have the following information:
-                    <ul>
-                        <li>Complete Name which Middle Name must be spelled out</li>
-                        <li>Date of Birth</li>
-                        <li>Place of Birth</li>
-                        <li>Must have the requester's and Brgy. Captain signatures</li>
-                    </ul>
-                </div>
-            </div>
-        </div>`,
-    update: `
-        <div class="req-section">
-            <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Update Notice:</strong> Bring the ORIGINAL COPIES of documents matching the field you wish to change.</div>
-            <table class="req-table">
-                <thead><tr><th>FIELD TO BE CHANGED</th><th>REQUIRED SUPPORTING DOCUMENT</th></tr></thead>
-                <tbody>
-                    <tr><td>Name / Sex / DOB / POB</td><td>Birth Certificate (PSA/NSO/LCRO)</td></tr>
-                    <tr><td>Last Name (Widowed)</td><td>Death Certificate of Spouse</td></tr>
-                    <tr><td>Blood Type</td><td>Official Blood Typing Result</td></tr>
-                    <tr><td>Address</td><td>Barangay Cert or Proof of Billing</td></tr>
-                    <tr><td>Marital Status</td><td>Marriage/Death/Annulment docs</td></tr>
-                </tbody>
-            </table>
-            <div class="req-note"><i class="bi bi-info-circle"></i> You must present your Transaction Slip or Reference Number.</div>
-        </div>`,
-    paper_form: `
-        <div class="req-section">
-            <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Note:</strong> You must present your Transaction Slip or Reference Number.</div>
-            <h4><i class="bi bi-person-badge"></i> REPRESENTATIVE</h4>
-            <ul><li><i class="bi bi-check2-circle"></i> Signed Authorization Letter</li><li><i class="bi bi-check2-circle"></i> Valid Gov ID of Representative</li><li><i class="bi bi-check2-circle"></i> Copy of Valid ID of Registrant</li></ul>
-            <h4><i class="bi bi-person-arms-up"></i> FOR MINORS</h4>
-            <ul><li><i class="bi bi-check2-circle"></i> Birth Certificate of Minor</li><li><i class="bi bi-check2-circle"></i> Valid ID of Parent/Guardian</li><li><i class="bi bi-check2-circle"></i> Guardianship Proof (if applicable)</li></ul>
-            <div class="req-warning mt-3"><i class="bi bi-exclamation-triangle-fill"></i> Failure to present these documents may result in rescheduling.</div>
-        </div>`,
-    inquiry: `
-        <div class="req-section">
-            <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Important Notice:</strong> Please bring your Transaction Slip or Reference Number for faster processing.</div>
-            <h4><i class="bi bi-file-text"></i> TRANSACTION SLIP / REFERENCE NUMBER</h4>
-            <ul>
-                <li><i class="bi bi-check2-circle"></i> Original Transaction Slip (if available)</li>
-                <li><i class="bi bi-check2-circle"></i> Reference Number from previous appointment</li>
-                <li><i class="bi bi-check2-circle"></i> Any valid ID for verification purposes</li>
-            </ul>
-            <div class="req-warning mt-3"><i class="bi bi-exclamation-triangle-fill"></i><strong>Pahabol:</strong> Mangyaring dalhin ang mga original documents. Hindi tatanggapin ang mga photocopy.</div>
-            <h4><i class="bi bi-star-fill"></i> PRIMARY SUPPORTING DOCUMENTS</h4>
-            <p>The registrant is encouraged to bring any of the following:</p>
-            <ul class="req-checklist">
-                <li><i class="bi bi-square"></i> PSA-issued Birth Certificate <strong>AND</strong> one (1) gov-issued ID</li>
-                <li><i class="bi bi-square"></i> Philippine Passport or ePassport (DFA)</li>
-                <li><i class="bi bi-square"></i> UMID Card (GSIS or SSS)</li>
-                <li><i class="bi bi-square"></i> Student's License Permit or Driver's License (LTO)</li>
-            </ul>
-            <h4><i class="bi bi-files"></i> SECONDARY SUPPORTING DOCUMENTS</h4>
-            <p>If Primary IDs are unavailable, present these (must have photo, DOB, and signature):</p>
-            <div class="row">
-                <div class="col-md-6"><ul><li><i class="bi bi-square"></i> PSA/NSO Birth Cert (with BreN)</li><li><i class="bi bi-square"></i> LCRO-issued Birth Certificate</li><li><i class="bi bi-square"></i> PRC ID / IBP ID / Seaman's Book</li><li><i class="bi bi-square"></i> OWWA ID / Senior Citizen ID</li><li><i class="bi bi-square"></i> SSS ID / PhilHealth ID / TIN ID</li><li><i class="bi bi-square"></i> NBI / Police Clearance</li></ul></div>
-                <div class="col-md-6"><ul><li><i class="bi bi-square"></i> Voter's ID / Postal ID / 4Ps ID</li><li><i class="bi bi-square"></i> Solo Parent ID / PWD ID</li><li><i class="bi bi-square"></i> Employee ID / School ID</li><li><i class="bi bi-square"></i> Barangay ID / Clearance</li><li><i class="bi bi-square"></i> Voter's Certification (COMELEC)</li><li><i class="bi bi-square"></i> CSC Eligibility / MARINA ID</li></ul></div>
-            </div>
-            <div class="req-note mt-3"><i class="bi bi-exclamation-circle"></i> ❗ Bring appropriate documents to avoid rescheduling.</div>
-        </div>`
+    registration: `...`, // keep your existing HTML strings
+    update:       `...`,
+    paper_form:   `...`,
+    inquiry:      `...`
 };
 
 function show_requirements_modal(transaction_class) {
-    document.getElementById('requirements_body').innerHTML = requirements_data[transaction_class] || requirements_data.registration;
+    // Use req_key to map numeric value to requirements key
+    const req_key = type_map[transaction_class]?.req_key || 'registration';
+    document.getElementById('requirements_body').innerHTML = requirements_data[req_key] || requirements_data.registration;
     document.getElementById('requirements_modal').classList.add('active');
 }
 function hide_requirements_modal() {
@@ -365,11 +418,6 @@ function hide_requirements_modal() {
 }
 
 // ==================== BACKEND API CALLS ====================
-
-/**
- * Fetches the server's current date via load_system_datetime.
- * Stores result in `current_date` used as transaction_schedule.
- */
 function fetch_system_datetime() {
     return fetch(base_url + 'i.php/sys_control/load_system_datetime', {
         method: 'POST',
@@ -378,9 +426,9 @@ function fetch_system_datetime() {
     .then(res => res.json())
     .then(data => {
         if (data && data[0]) {
-            current_date     = data[0].current_date     ?? new Date().toISOString().split('T')[0];
-            current_time     = data[0].current_time     ?? '--:-- --';
-            previous_month   = data[0].previous_month   ?? null;
+            current_date   = data[0].current_date   ?? new Date().toISOString().split('T')[0];
+            current_time   = data[0].current_time   ?? '--:-- --';
+            previous_month = data[0].previous_month ?? null;
         }
     })
     .catch(() => {
@@ -390,23 +438,17 @@ function fetch_system_datetime() {
     });
 }
 
-/**
- * POSTs all required fields to insert_new_transaction.
- * - transaction_class: fixed as 'national_id' for this queuing system
- * - priority_level:    1 for priority lane, 0 for regular
- * - transaction_schedule: today's date from the server
- */
 function submit_transaction(personal_data, transaction_class, service_type) {
     const form_data = new FormData();
-    form_data.append('first_name',            personal_data.first_name);
-    form_data.append('middle_name',           personal_data.middle_name);
-    form_data.append('last_name',             personal_data.last_name);
-    form_data.append('gender',                personal_data.gender);
-    form_data.append('birthdate',             personal_data.birthdate);
-    form_data.append('transaction_type',      'q');
-    form_data.append('transaction_class',     transaction_class);
-    form_data.append('priority_level',        service_type === 'priority' ? 1 : 2);
-    form_data.append('transaction_schedule',  current_date);
+    form_data.append('first_name',           personal_data.first_name);
+    form_data.append('middle_name',          personal_data.middle_name  ?? '');
+    form_data.append('last_name',            personal_data.last_name);
+    form_data.append('gender',               personal_data.gender);
+    form_data.append('birthdate',            personal_data.birthdate);
+    form_data.append('transaction_type',     'q');
+    form_data.append('transaction_class',    transaction_class);
+    form_data.append('priority_level',       service_type === 'priority' ? 1 : 2);
+    form_data.append('transaction_schedule', current_date);
 
     return fetch(base_url + 'i.php/sys_control/insert_new_transaction', {
         method: 'POST',
@@ -416,14 +458,10 @@ function submit_transaction(personal_data, transaction_class, service_type) {
     .then(res => res.json());
 }
 
-/**
- * Polls load_current_serving to get the minimum pending sequence
- * for the given transaction_class + priority_level + today's date.
- */
 function fetch_current_serving(service_type) {
     const form_data = new FormData();
-    form_data.append('transaction_class',    'national_id');
-    form_data.append('priority_level',       service_type === 'priority' ? 1 : 0);
+    form_data.append('transaction_class',    '1');
+    form_data.append('priority_level',       service_type === 'priority' ? 1 : 2);
     form_data.append('transaction_schedule', current_date || new Date().toISOString().split('T')[0]);
 
     return fetch(base_url + 'i.php/sys_control/load_current_serving', {
@@ -437,34 +475,44 @@ function fetch_current_serving(service_type) {
 // ==================== PRIVACY MODAL ====================
 function init_privacy_modal() {
     const privacy_modal = document.getElementById('privacy_modal');
-    const agree_btn = document.getElementById('agree_btn');
+    const agree_btn     = document.getElementById('agree_btn');
     if (privacy_modal) privacy_modal.classList.add('active');
-    if (agree_btn) agree_btn.addEventListener('click', () => privacy_modal.classList.remove('active'));
+    if (agree_btn)     agree_btn.addEventListener('click', () => privacy_modal.classList.remove('active'));
 }
 
 // ==================== PAGE 1: SERVICE SELECTION ====================
 function init_service_selection() {
     document.querySelectorAll('.option-card').forEach(card => {
-        card.addEventListener('click', () => {
-            selected_service = card.getAttribute('data-service');
-            sessionStorage.setItem('service_type', selected_service);
+        let touch_moved = false;
 
-            const label_text = selected_service === 'priority' ? 'Priority Service' : 'Regular Service';
-            const badge_bg   = selected_service === 'priority' ? 'rgba(16,185,129,0.1)' : 'rgba(44,95,138,0.1)';
-
-            document.querySelectorAll('#selected_service_label, #selected_service_label_2').forEach(s => s.textContent = label_text);
-            document.querySelectorAll('#service_type_badge, #service_type_badge_2').forEach(b => b.style.background = badge_bg);
-
-            show_screen('personal_info_screen');
+        card.addEventListener('touchstart', () => { touch_moved = false; }, { passive: true });
+        card.addEventListener('touchmove',  () => { touch_moved = true;  }, { passive: true });
+        card.addEventListener('touchend', (e) => {
+            if (touch_moved) return;
+            e.preventDefault();
+            handle_service_select(card);
         });
+        card.addEventListener('click', () => { handle_service_select(card); });
     });
+}
+
+function handle_service_select(card) {
+    selected_service = card.getAttribute('data-service');
+    sessionStorage.setItem('service_type', selected_service);
+
+    const label_text = selected_service === 'priority' ? 'Priority Service' : 'Regular Service';
+    const badge_bg   = selected_service === 'priority' ? 'rgba(16,185,129,0.1)' : 'rgba(44,95,138,0.1)';
+
+    document.querySelectorAll('#selected_service_label, #selected_service_label_2').forEach(s => s.textContent = label_text);
+    document.querySelectorAll('#service_type_badge, #service_type_badge_2').forEach(b => b.style.background = badge_bg);
+
+    show_screen('personal_info_screen');
 }
 
 // ==================== PAGE 2: PERSONAL INFORMATION ====================
 function init_personal_info() {
     document.getElementById('back_to_service_btn')?.addEventListener('click', () => show_screen('service_selection_screen'));
 
-    // Restore saved values so the user doesn't lose data on "Back"
     const saved_data = sessionStorage.getItem('personal_data');
     if (saved_data) {
         const data = JSON.parse(saved_data);
@@ -490,8 +538,8 @@ function init_personal_info() {
         };
 
         if (!personal_data.first_name || !personal_data.last_name) return show_notification('Please enter your first name and last name', 'warning');
-        if (!personal_data.gender)   return show_notification('Please select gender', 'warning');
-        if (!personal_data.birthdate) return show_notification('Please enter birthdate', 'warning');
+        if (!personal_data.gender)                                   return show_notification('Please select gender', 'warning');
+        if (!personal_data.birthdate)                                return show_notification('Please enter birthdate', 'warning');
 
         sessionStorage.setItem('personal_data', JSON.stringify(personal_data));
         show_screen('service_details_screen');
@@ -507,18 +555,16 @@ function init_service_details() {
     });
 
     document.getElementById('close_requirements_btn')?.addEventListener('click', hide_requirements_modal);
-    document.getElementById('understand_btn')?.addEventListener('click', hide_requirements_modal);
+    document.getElementById('understand_btn')?.addEventListener('click',          hide_requirements_modal);
 
-    // "Continue" on success modal → show confirmation
     document.getElementById('continue_btn')?.addEventListener('click', () => {
         hide_success_modal();
         show_confirmation_modal();
     });
 
-    // "Yes, I'm Sure" on confirmation modal → go to queue status
     document.getElementById('confirm_proceed_btn')?.addEventListener('click', () => {
         hide_confirmation_modal();
-        sessionStorage.removeItem('personal_data'); // clear form data; keep queue number + service type
+        sessionStorage.removeItem('personal_data');
         show_screen('service_selection_screen');
         show_notification(`Queue number ${current_queue_data?.queue_number} confirmed!`, 'success');
         init_queue_status_polling();
@@ -532,49 +578,45 @@ function init_service_details() {
         const personal_data     = JSON.parse(sessionStorage.getItem('personal_data') || '{}');
         const full_name         = [personal_data.first_name, personal_data.middle_name, personal_data.last_name].filter(Boolean).join(' ');
 
-        const type_map = {
-            1: { prefix: 'R', value: 1, label: 'Registration' },
-            2: { prefix: 'U', value: 2, label: 'Updating/Correction' },
-            3: { prefix: 'P', value: 3, label: 'Paper Form' },
-            4: { prefix: 'I', value: 4, label: 'Inquiry' }
-        };
-
-        const { prefix: type_prefix, value: transaction_value, label: transaction_label } = type_map[transaction_class] || type_map[1];
-
-        const priority_map = {
-            'priority': 'P',
-            'regular':  'R'
-        };
+        const { prefix: type_prefix, label: transaction_label } = type_map[transaction_class] || type_map[1];
         const priority_prefix = priority_map[service_type] || 'R';
 
         const submit_btn = document.getElementById('submit_service_btn');
         set_loading(submit_btn, true);
 
         submit_transaction(personal_data, transaction_class, service_type)
-        .then(response => {
-            set_loading(submit_btn, false);
+            .then(response => {
+                set_loading(submit_btn, false);
 
-            if (response.success) {
-                const queue_number = `${priority_prefix}:${type_prefix}-${response.transaction_sequence}`;
-                current_queue_number = queue_number;
-                sessionStorage.setItem('current_queue_number', queue_number);
-                sessionStorage.setItem('current_service_type', service_type);
-                show_success_modal(queue_number, full_name, transaction_label, type_prefix);
+                if (response.success) {
+                    const queue_number = `${priority_prefix}:${type_prefix}-${response.transaction_sequence}`;
+                    current_queue_number = queue_number;
+                    sessionStorage.setItem('current_queue_number', queue_number);
+                    sessionStorage.setItem('current_service_type', service_type);
+                    show_success_modal(queue_number, full_name, transaction_label, type_prefix);
 
-            } else if (response.status === 'duplicate') {
-                show_notification(
-                    `You already have an existing appointment today. Your transaction code is: ${response.transaction_code}`,
-                    'warning'
-                );
+                } else if (response.status === 'duplicate') {
+                    show_duplicate_modal(
+                        response.transaction_code,
+                        response.transaction_data_id,
+                        full_name,
+                        transaction_class,
+                        service_type,
+                        personal_data,
+                        type_prefix,
+                        priority_prefix,
+                        transaction_label
+                    );
 
-            } else {
-                show_notification(response.message || 'Transaction failed. Please try again.', 'warning');
-            }
-        })
-        .catch(() => {
-            set_loading(submit_btn, false);
-            show_notification('Network error. Please check your connection and try again.', 'warning');
-        });
+                } else {
+                    show_notification(response.message || 'Transaction failed. Please try again.', 'warning');
+                }
+            })
+            .catch((err) => {
+                set_loading(submit_btn, false);
+                console.error('submit_transaction error:', err); // add this
+                show_notification('Network error. Please check your connection and try again.', 'warning');
+            });
     });
 }
 
@@ -590,51 +632,47 @@ function update_queue_status_ui() {
     const service_type = sessionStorage.getItem('current_service_type') || selected_service || 'regular';
 
     fetch_current_serving(service_type)
-    .then(response => {
-        const serving_div = document.getElementById('currently_serving');
+        .then(response => {
+            const serving_div = document.getElementById('currently_serving');
 
-        if (response.status === 'success' && response.current_sequence) {
-            serving_div.innerHTML = `
-                <div class="serving-number">${response.current_sequence}</div>
-                <div class="serving-name">Now Serving</div>
-                <div class="serving-type"></div>
-            `;
+            if (response.status === 'success' && response.current_sequence) {
+                serving_div.innerHTML = `
+                    <div class="serving-number">${response.current_sequence}</div>
+                    <div class="serving-name">Now Serving</div>
+                    <div class="serving-type"></div>
+                `;
 
-            if (current_queue_number) {
-                document.getElementById('your_info').style.display = 'flex';
-                document.getElementById('your_queue_number').textContent = current_queue_number;
-
-                // Compare numeric parts only for "people ahead" estimate
-                const serving_seq = parseInt(response.current_sequence.replace(/\D/g, ''), 10);
-                const your_seq    = parseInt(current_queue_number.replace(/\D/g, ''), 10);
-                document.getElementById('people_ahead').textContent = Math.max(0, your_seq - serving_seq);
+                if (current_queue_number) {
+                    document.getElementById('your_info').style.display         = 'flex';
+                    document.getElementById('your_queue_number').textContent    = current_queue_number;
+                    const serving_seq = parseInt(response.current_sequence.replace(/\D/g, ''), 10);
+                    const your_seq    = parseInt(current_queue_number.replace(/\D/g, ''), 10);
+                    document.getElementById('people_ahead').textContent = Math.max(0, your_seq - serving_seq);
+                } else {
+                    document.getElementById('your_info').style.display = 'none';
+                }
             } else {
-                document.getElementById('your_info').style.display = 'none';
+                serving_div.innerHTML = `
+                    <div class="serving-number">---</div>
+                    <div class="serving-name">No active transaction</div>
+                    <div class="serving-type"></div>
+                `;
             }
-        } else {
-            serving_div.innerHTML = `
-                <div class="serving-number">---</div>
-                <div class="serving-name">No active transaction</div>
-                <div class="serving-type"></div>
-            `;
-        }
-    })
-    .catch(() => { /* Silently retry on next interval */ });
+        })
+        .catch(() => { /* Silently retry */ });
 }
 
 // ==================== INITIALIZE ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Always fetch server datetime first so current_date is ready before any submission
     fetch_system_datetime().then(() => {
         init_privacy_modal();
         init_service_selection();
         init_personal_info();
         init_service_details();
 
-        // Resume queue status screen if user refreshes the page mid-session
         if (sessionStorage.getItem('current_queue_number')) {
             current_queue_number = sessionStorage.getItem('current_queue_number');
-            show_screen('service_selection_screen'); // Start from the first screen to show the correct service badge
+            show_screen('service_selection_screen');
             init_queue_status_polling();
         }
     });
