@@ -539,12 +539,13 @@ function init_service_details() {
         const full_name         = [personal_data.first_name, personal_data.middle_name, personal_data.last_name].filter(Boolean).join(' ');
 
         const type_map = {
-            registration: { prefix: 'R', label: 'Registration' },
-            update:       { prefix: 'U', label: 'Updating/Correction' },
-            paper_form:   { prefix: 'P', label: 'Paper Form' },
-            inquiry:      { prefix: 'I', label: 'Inquiry' }
+            1: { prefix: 'R', value: 1, label: 'Registration' },
+            2: { prefix: 'U', value: 2, label: 'Updating/Correction' },
+            3: { prefix: 'P', value: 3, label: 'Paper Form' },
+            4: { prefix: 'I', value: 4, label: 'Inquiry' }
         };
-        const { prefix: type_prefix, label: transaction_label } = type_map[transaction_class] || type_map.registration;
+
+        const { prefix: type_prefix, value: transaction_value, label: transaction_label } = type_map[transaction_class] || type_map[1];
 
         const priority_map = {
             'priority': 'P',
@@ -560,13 +561,18 @@ function init_service_details() {
             set_loading(submit_btn, false);
 
             if (response.success) {
-                // e.g. "R-P001" (Registration, Priority, sequence 001)
-                //      "U-R003" (Updating, Regular, sequence 003)
                 const queue_number = `${priority_prefix}:${type_prefix}-${response.transaction_sequence}`;
                 current_queue_number = queue_number;
                 sessionStorage.setItem('current_queue_number', queue_number);
                 sessionStorage.setItem('current_service_type', service_type);
                 show_success_modal(queue_number, full_name, transaction_label, type_prefix);
+
+            } else if (response.status === 'duplicate') {
+                show_notification(
+                    `You already have an existing appointment today. Your transaction code is: ${response.transaction_code}`,
+                    'warning'
+                );
+
             } else {
                 show_notification(response.message || 'Transaction failed. Please try again.', 'warning');
             }

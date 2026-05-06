@@ -95,13 +95,58 @@ class Sys_model extends CI_Model {
 	{
 		header('Content-Type: application/json');
 
-		// Transaction-related inputs
-		$transaction_type     = $_POST['transaction_type'];
 		$transaction_class    = $_POST['transaction_class'];
 		$priority_level       = $_POST['priority_level'];
 		$transaction_schedule = $_POST['transaction_schedule'];
+		$first_name           = $_POST['first_name'];
+		$middle_name          = $_POST['middle_name'] ?? null;
+		$last_name            = $_POST['last_name'];
+		$gender               = $_POST['gender'];
+		$birthdate            = $_POST['birthdate'];
+		$transaction_type     = $_POST['transaction_type'];
 
-		// Sequence query params
+		// Check if a client with same name and birthdate already has a transaction today
+		$existing = $this->db->query(
+			"SELECT 
+				td.transaction_sequence,
+				td.transaction_class,
+				td.priority_level,
+				td.transaction_status
+			FROM transaction_data td
+			JOIN client_data cd ON cd.client_data_id = td.client_data_id
+			WHERE 
+				cd.first_name           = ?
+				AND cd.last_name        = ?
+				AND cd.birthdate        = ?
+				AND td.transaction_schedule = ?
+				AND td.transaction_status   NOT IN (1)
+			ORDER BY td.transaction_data_id DESC
+			LIMIT 1",
+			[$first_name, $last_name, $birthdate, $transaction_schedule]
+		)->row();
+
+		if ($existing) {
+			$priority_map = [1 => 'priority', 2 => 'regular'];
+			$class_map    = [
+				1 => ['prefix' => 'R'],
+				2 => ['prefix' => 'U'],
+				3 => ['prefix' => 'P'],
+				4 => ['prefix' => 'I']
+			];
+
+			$priority_prefix  = $existing->priority_level == 1 ? 'P' : 'R';
+			$type_prefix      = $class_map[$existing->transaction_class]['prefix'] ?? 'R';
+			$sequence         = str_pad($existing->transaction_sequence, 3, '0', STR_PAD_LEFT);
+			$existing_code    = "{$priority_prefix}:{$type_prefix}-{$sequence}";
+
+			echo json_encode([
+				'status'           => 'duplicate',
+				'message'          => 'You already have an existing appointment today.',
+				'transaction_code' => $existing_code
+			]);
+			exit;
+		}
+
 		$params = [];
 		$params[] = $transaction_class;
 		$params[] = $priority_level;
@@ -109,15 +154,15 @@ class Sys_model extends CI_Model {
 
 		$this->db->trans_start();
 
-		// Get the current max sequence for this group
 		$sql = "SELECT 
 					MAX(CAST(transaction_sequence AS UNSIGNED)) AS current_sequence
 				FROM transaction_data
-				WHERE
+				WHERE 
 					transaction_class    = ?
-					AND priority_level       = ?
+					AND priority_level   = ?
 					AND transaction_schedule = ?
-				FOR UPDATE";
+				FOR UPDATE
+		";
 		$query = $this->db->query($sql, $params);
 
 		$row              = $query->row();
@@ -125,20 +170,8 @@ class Sys_model extends CI_Model {
 
 		$transaction_sequence = str_pad($current_sequence + 1, 3, '0', STR_PAD_LEFT);
 
-		// Client inputs
-		$first_name  = $_POST['first_name'];
-		$middle_name = $_POST['middle_name'] ?? null;
-		$last_name   = $_POST['last_name'];
-		$gender      = $_POST['gender'];
-		$birthdate   = $_POST['birthdate'];
-
-		// Insert client
 		$sql = "INSERT INTO client_data 
-					(first_name, 
-					middle_name, 
-					last_name, 
-					gender, 
-					birthdate)
+					(first_name, middle_name, last_name, gender, birthdate)
 				VALUES (?, ?, ?, ?, ?)";
 		$this->db->query($sql, [
 			$first_name,
@@ -150,16 +183,16 @@ class Sys_model extends CI_Model {
 
 		$client_data_id = $this->db->insert_id();
 
-		// Insert transaction
 		$sql = "INSERT INTO transaction_data 
-					(client_data_id, 
-					transaction_type, 
-					transaction_class, 
-					transaction_sequence, 
-					priority_level, 
-					transaction_schedule, 
-					transaction_status)
-				VALUES (?, ?, ?, ?, ?, ?, ?)";
+					(client_data_id,
+					transaction_type,
+					transaction_class,
+					transaction_sequence,
+					priority_level,
+					transaction_schedule,
+					transaction_status,
+					table_id)
+				VALUES (?, ?, ?, ?, ?, ?, ?, NULL)";
 		$this->db->query($sql, [
 			$client_data_id,
 			$transaction_type,
@@ -167,7 +200,7 @@ class Sys_model extends CI_Model {
 			$transaction_sequence,
 			$priority_level,
 			$transaction_schedule,
-			0, // default status
+			0,
 		]);
 
 		$this->db->trans_complete();
@@ -175,20 +208,20 @@ class Sys_model extends CI_Model {
 		if ($this->db->trans_status() === false) {
 			echo json_encode([
 				'success' => false,
-				'message' => 'Transaction failed. Please try again.',
+				'message' => 'Transaction failed. Please try again.'
 			]);
 			return;
 		}
+
+		$this->broadcast_update();
 
 		echo json_encode([
 			'success'              => true,
 			'message'              => 'Transaction created successfully.',
 			'client_data_id'       => $client_data_id,
-			'transaction_sequence' => $transaction_sequence,
+			'transaction_sequence' => $transaction_sequence
 		]);
-		$this->broadcast_update();
 	}
-
 	public function load_current_serving()
 	{
 		header('Content-Type: application/json');
