@@ -24,12 +24,12 @@
             <h3>PHILIPPINE STATISTICS AUTHORITY</h3>
         </div>
         <div class="privacy-body">
-            <div class="privacy-badge"><i class="bi bi-id-card"></i><span>National ID </span></span></div>
-            <p class="privacy-intro">This system collects and processes limited personal information solely for the purpose of scheduling, managing, and confirming National ID System appointments, in accordance with the <strong>Data Privacy Act of 2012 (RA 10173)</strong>.</p>
+            <div class="privacy-badge"><i class="bi bi-id-card"></i><span>National ID Queuing & Appointment System </span></span></div>
+            <p class="privacy-intro">This system collects and processes limited personal information solely for the purpose of scheduling, managing, and confirming National ID System appointments, in accordance with the <strong>Data Privacy Act of 2012 (RA 10173)</strong>.</p><br>
             <div class="privacy-list">
-                <div class="privacy-item"><i class="bi bi-database"></i><div><strong>Collected Data:</strong><br><small>Full name, contact info, and selected schedule.</small></div></div>
-                <div class="privacy-item"><i class="bi bi-bullseye"></i><div><strong>Purpose:</strong><br><small>Exclusively for appointment management.</small></div></div>
-                <div class="privacy-item"><i class="bi bi-shield-check"></i><div><strong>Protection:</strong><br><small>Stored with high-level administrative safeguards.</small></div></div>
+                <div class="privacy-item"><i class="bi bi-database"></i><div><strong>Collected Data:</strong><small>Full Name, Contact Number, Email Address, Date of Birth, Gender, and Selected Schedule.</small></div></div>
+                <div class="privacy-item"><i class="bi bi-bullseye"></i><div><strong>Purpose:</strong><small>Exclusively for appointment management.</small></div></div>
+                <div class="privacy-item"><i class="bi bi-shield-check"></i><div><strong>Protection:</strong><small>Stored with high-level administrative safeguards.</small></div></div>
             </div>
             <p class="privacy-footer">By proceeding, you confirm that you have read, understood, and voluntarily consent to the collection and processing of your personal data for the stated purpose.</p>
         </div>
@@ -85,9 +85,9 @@
         <div class="psa-header">
             <div class="psa-logo"><img src="<?php echo base_url();?>images/queuing_images/logopsa.webp" alt="PSA Logo" class="psa-logo-img" onerror="this.src='https://placehold.co/80x80/2c5f8a/white?text=PSA'"></div>
             <h1>REPUBLIC OF THE PHILIPPINES</h1>
-            <h2>Philippine Statistics Authority</h2>
-            <h1 class="samar-text">Samar</h1>
-            <h2>National ID</h2>
+            <h2>Philippine Statistics Authority - Samar</h2>
+            <h1>National ID </h1>
+            <h2>Queuing & Appointment System</h2>
         </div>
         <div class="description-card">
             <div class="description-icon"><i class="bi bi-info-circle-fill"></i></div>
@@ -406,10 +406,107 @@ function update_transaction(transaction_data_id, transaction_class, service_type
 
 // ==================== REQUIREMENTS DATA ====================
 const requirements_data = {
-    registration: `...`, // keep your existing HTML strings
-    update:       `...`,
-    paper_form:   `...`,
-    inquiry:      `...`
+    registration: `
+        <div class="req-section">
+            <h3 class="req-main-title"><i class="bi bi-id-card"></i> NATIONAL ID REGISTRATION REQUIREMENTS</h3>
+            <div class="age-group">
+                <h4><i class="bi bi-1-circle-fill"></i> 0-4 years old</h4>
+                <ul>
+                    <li><i class="bi bi-check2-circle"></i> Certificate of Live Birth (PSA/NSO/LCR copy)</li>
+                    <li><i class="bi bi-check2-circle"></i> National ID (PVC/Paper Form/Digital version) of Parents or Guardian</li>
+                </ul>
+            </div>
+            <div class="age-group">
+                <h4><i class="bi bi-3-circle-fill"></i> 5 years old and above</h4>
+                <p class="req-note-text">Present at least 1 or 2 documents of the following requirements:</p>
+                <div class="two-columns">
+                    <ul>
+                        <li><i class="bi bi-check2-circle"></i> Passport</li>
+                        <li><i class="bi bi-check2-circle"></i> Driver's License</li>
+                        <li><i class="bi bi-check2-circle"></i> UMID ID</li>
+                        <li><i class="bi bi-check2-circle"></i> PRC ID</li>
+                        <li><i class="bi bi-check2-circle"></i> Voter's ID/Voter's Certificate</li>
+                        <li><i class="bi bi-check2-circle"></i> PhilHealth ID</li>
+                        <li><i class="bi bi-check2-circle"></i> TIN ID</li>
+                        <li><i class="bi bi-check2-circle"></i> Postal ID</li>
+                        <li><i class="bi bi-check2-circle"></i> Employee ID</li>
+                        <li><i class="bi bi-check2-circle"></i> Brgy. ID</li>
+                    </ul>
+                    <ul>
+                        <li><i class="bi bi-check2-circle"></i> Old SSS ID</li>
+                        <li><i class="bi bi-check2-circle"></i> NBI Clearance</li>
+                        <li><i class="bi bi-check2-circle"></i> Police Clearance</li>
+                        <li><i class="bi bi-check2-circle"></i> Certificate of Live Birth (PSA/NSO/LCR copy)</li>
+                        <li><i class="bi bi-check2-circle"></i> Certificate of Marriage (if married)</li>
+                        <li><i class="bi bi-check2-circle"></i> 4P's ID</li>
+                        <li><i class="bi bi-check2-circle"></i> Solo Parent ID</li>
+                        <li><i class="bi bi-check2-circle"></i> PWD ID</li>
+                        <li><i class="bi bi-check2-circle"></i> School ID</li>
+                    </ul>
+                </div>
+                <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Note:</strong> If PSA, NSO, and LCR Live Birth are unavailable, present Brgy. Certification with 2x2 ID picture.</div>
+                <div class="brgy-note">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <strong>Brgy Certification with 2x2 ID picture</strong> must have the following information:
+                    <ul>
+                        <li>Complete Name which Middle Name must be spelled out</li>
+                        <li>Date of Birth</li>
+                        <li>Place of Birth</li>
+                        <li>Must have the requester's and Brgy. Captain signatures</li>
+                    </ul>
+                </div>
+            </div>
+        </div>`,
+    update: `
+        <div class="req-section">
+            <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Update Notice:</strong> Bring the ORIGINAL COPIES of documents matching the field you wish to change.</div>
+            <table class="req-table">
+                <thead><tr><th>FIELD TO BE CHANGED</th><th>REQUIRED SUPPORTING DOCUMENT</th></tr></thead>
+                <tbody>
+                    <tr><td>Name / Sex / DOB / POB</td><td>Birth Certificate (PSA/NSO/LCRO)</td></tr>
+                    <tr><td>Last Name (Widowed)</td><td>Death Certificate of Spouse</td></tr>
+                    <tr><td>Blood Type</td><td>Official Blood Typing Result</td></tr>
+                    <tr><td>Address</td><td>Barangay Cert or Proof of Billing</td></tr>
+                    <tr><td>Marital Status</td><td>Marriage/Death/Annulment docs</td></tr>
+                </tbody>
+            </table>
+            <div class="req-note"><i class="bi bi-info-circle"></i> You must present your Transaction Slip or Reference Number.</div>
+        </div>`,
+    paper_form: `
+        <div class="req-section">
+            <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Note:</strong> You must present your Transaction Slip or Reference Number.</div>
+            <h4><i class="bi bi-person-badge"></i> REPRESENTATIVE</h4>
+            <ul><li><i class="bi bi-check2-circle"></i> Signed Authorization Letter</li><li><i class="bi bi-check2-circle"></i> Valid Gov ID of Representative</li><li><i class="bi bi-check2-circle"></i> Copy of Valid ID of Registrant</li></ul>
+            <h4><i class="bi bi-person-arms-up"></i> FOR MINORS</h4>
+            <ul><li><i class="bi bi-check2-circle"></i> Birth Certificate of Minor</li><li><i class="bi bi-check2-circle"></i> Valid ID of Parent/Guardian</li><li><i class="bi bi-check2-circle"></i> Guardianship Proof (if applicable)</li></ul>
+            <div class="req-warning mt-3"><i class="bi bi-exclamation-triangle-fill"></i> Failure to present these documents may result in rescheduling.</div>
+        </div>`,
+    inquiry: `
+        <div class="req-section">
+            <div class="req-warning"><i class="bi bi-exclamation-triangle-fill"></i><strong>Important Notice:</strong> Please bring your Transaction Slip or Reference Number for faster processing.</div>
+            <h4><i class="bi bi-file-text"></i> TRANSACTION SLIP / REFERENCE NUMBER</h4>
+            <ul>
+                <li><i class="bi bi-check2-circle"></i> Original Transaction Slip (if available)</li>
+                <li><i class="bi bi-check2-circle"></i> Reference Number from previous appointment</li>
+                <li><i class="bi bi-check2-circle"></i> Any valid ID for verification purposes</li>
+            </ul>
+            <div class="req-warning mt-3"><i class="bi bi-exclamation-triangle-fill"></i><strong>Pahabol:</strong> Mangyaring dalhin ang mga original documents. Hindi tatanggapin ang mga photocopy.</div>
+            <h4><i class="bi bi-star-fill"></i> PRIMARY SUPPORTING DOCUMENTS</h4>
+            <p>The registrant is encouraged to bring any of the following:</p>
+            <ul class="req-checklist">
+                <li><i class="bi bi-square"></i> PSA-issued Birth Certificate <strong>AND</strong> one (1) gov-issued ID</li>
+                <li><i class="bi bi-square"></i> Philippine Passport or ePassport (DFA)</li>
+                <li><i class="bi bi-square"></i> UMID Card (GSIS or SSS)</li>
+                <li><i class="bi bi-square"></i> Student's License Permit or Driver's License (LTO)</li>
+            </ul>
+            <h4><i class="bi bi-files"></i> SECONDARY SUPPORTING DOCUMENTS</h4>
+            <p>If Primary IDs are unavailable, present these (must have photo, DOB, and signature):</p>
+            <div class="row">
+                <div class="col-md-6"><ul><li><i class="bi bi-square"></i> PSA/NSO Birth Cert (with BreN)</li><li><i class="bi bi-square"></i> LCRO-issued Birth Certificate</li><li><i class="bi bi-square"></i> PRC ID / IBP ID / Seaman's Book</li><li><i class="bi bi-square"></i> OWWA ID / Senior Citizen ID</li><li><i class="bi bi-square"></i> SSS ID / PhilHealth ID / TIN ID</li><li><i class="bi bi-square"></i> NBI / Police Clearance</li></ul></div>
+                <div class="col-md-6"><ul><li><i class="bi bi-square"></i> Voter's ID / Postal ID / 4Ps ID</li><li><i class="bi bi-square"></i> Solo Parent ID / PWD ID</li><li><i class="bi bi-square"></i> Employee ID / School ID</li><li><i class="bi bi-square"></i> Barangay ID / Clearance</li><li><i class="bi bi-square"></i> Voter's Certification (COMELEC)</li><li><i class="bi bi-square"></i> CSC Eligibility / MARINA ID</li></ul></div>
+            </div>
+            <div class="req-note mt-3"><i class="bi bi-exclamation-circle"></i> ❗ Bring appropriate documents to avoid rescheduling.</div>
+        </div>`
 };
 
 function show_requirements_modal(transaction_class) {

@@ -271,6 +271,7 @@ class Sys_model extends CI_Model {
 	            'message' => 'No changes were made.'
 	        ]);
 	    }
+		$this->broadcast_update();
 	    exit;
 	}
 	public function load_current_serving()
