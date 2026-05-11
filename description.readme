@@ -1,0 +1,124 @@
+# Queue Management System (Q-Sys)
+
+## Overview
+
+Q-Sys is a comprehensive queue and appointment management system built with **CodeIgniter 3** and **PHP**. It provides an efficient solution for managing customer queues, appointments, and administrative operations with a user-friendly interface.
+
+## Features
+
+### Core Functionality
+- **User Authentication**: Secure login system with session management
+- **Queue Management**: Real-time queue tracking and management
+- **Appointment Scheduling**: Book and manage appointments
+- **Admin Dashboard**: Comprehensive system administration interface
+- **User Profile Management**: Manage user profiles and account settings
+- **Image Management**: Support for profile pictures and appointment-related images
+
+### System Components
+- **Semantic UI Framework**: Modern responsive UI components
+- **jQuery**: Dynamic frontend interactions
+- **Bootstrap-style Responsive Design**: Mobile-friendly interface
+- **Session Management**: Persistent user sessions
+- **Database Support**: SQL-based backend with backup management
+
+## Technology Stack
+
+- **Framework**: CodeIgniter 3.x
+- **Language**: PHP 5.6+
+- **Frontend**: HTML5, CSS3, JavaScript, jQuery
+- **UI Framework**: Semantic UI
+- **Database**: SQL (with backup files included)
+- **Server**: Apache/XAMPP compatible
+
+## Directory Structure
+
+```
+q_sys/
+├── application/              # CodeIgniter application files
+│   ├── controllers/         # Application controllers
+│   ├── models/              # Database models
+│   ├── views/               # UI templates
+│   ├── config/              # Application configuration
+│   ├── helpers/             # Helper functions
+│   ├── photos/              # Image storage
+│   │   ├── profile_pictures/
+│   │   ├── appointment_images/
+│   │   └── pos_images/
+│   └── sessions/            # Session storage
+├── system/                   # CodeIgniter core system
+├── style/                    # Custom CSS stylesheets
+├── jquery/                   # jQuery library
+├── semantic/                 # Semantic UI components
+├── db_backup/               # Database backup files
+├── images/                  # Application images
+└── audio/                   # Audio files
+```
+
+## Installation & Setup
+
+### Requirements
+- PHP 5.6 or higher
+- Apache web server (XAMPP recommended)
+- MySQL/MariaDB database
+- Composer (for dependency management)
+
+### Steps
+1. Place the project in your web root (e.g., `htdocs` for XAMPP)
+2. Configure the database connection in `application/config/database.php`
+3. Import database from `db_backup/` folder
+4. Set appropriate file permissions for `application/sessions/` and `application/logs/`
+5. Access the application via `http://localhost/q_sys/`
+
+## Configuration Files
+
+Key configuration files located in `application/config/`:
+- `config.php` - Main application configuration
+- `database.php` - Database connection settings
+- `routes.php` - URL routing configuration
+- `constants.php` - Application constants
+- `hooks.php` - CodeIgniter hooks configuration
+
+## Usage
+
+### Login
+- Access the login page and authenticate with valid credentials
+- Session management handles user state across the application
+
+### Queue Management
+- View active queues
+- Manage queue assignments
+- Track queue status in real-time
+
+### Appointment System
+- Schedule new appointments
+- View appointment calendar
+- Manage appointment statuses
+
+### Admin Features
+- User account management
+- System configuration
+- Report generation
+- Database maintenance
+
+## Database
+Database backups are available in the `db_backup/` directory:
+- `q_sys_db.sql` - Latest database schema and data
+
+To restore:
+```bash
+mysql -u username -p database_name < db_backup/q_sys_db.sql
+```
+
+## License
+Please refer to the `LICENSE` file in the root directory.
+
+## Support
+For issues or feature requests, please contact the development team.
+
+## Contributors
+See `contributing.md` for contribution guidelines.
+
+---
+
+**Version**: 1.0  
+**Last Updated**: May 8, 2026
