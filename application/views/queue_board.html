@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSA Samar | Queue Display</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        <?php include 'queue_board.css'; ?>
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="display-header">
+        <div class="header-logo">
+            <img src="<?php echo base_url(); ?>images/admin_images/logopsa.webp" alt="PSA Logo">
+            <div>
+                <h1>Philippine Statistics Authority</h1>
+                <p>Queue Display Board &mdash; Samar</p>
+            </div>
+        </div>
+        <div class="live-badge">
+            <span class="live-dot"></span> LIVE
+        </div>
+        <div class="header-clock">
+            <div class="clock-time" id="display_clock">--:-- --</div>
+            <div class="clock-date" id="display_date">---</div>
+        </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="tables-wrapper">
+        <div class="tables-grid" id="tables_grid">
+            <div class="no-tables">
+                <i class="bi bi-hourglass-split"></i>
+                <p>Loading queue data...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="display-footer">
+        <i class="bi bi-shield-check me-1"></i>
+        Philippine Statistics Authority &mdash; Samar &bull; Queue Display System
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const base_url = "<?php echo base_url(); ?>";
+
+        const class_label_map = {
+            1: 'Registration',
+            2: 'Updating/Correction',
+            3: 'Paper Form',
+            4: 'Inquiry'
+        };
+
+        const type_prefix_map = {
+            1: 'R',
+            2: 'U',
+            3: 'P',
+            4: 'I'
+        };
+
+        const priority_prefix_map = {
+            1: 'P',
+            2: 'R'
+        };
+
+        const priority_label_map = {
+            1: 'Priority',
+            2: 'Regular'
+        };
+
+        // ==================== CLOCK ====================
+        function update_clock() {
+            const now     = new Date();
+            const hours   = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm    = hours >= 12 ? 'PM' : 'AM';
+            const h12     = String(hours % 12 || 12).padStart(2, '0');
+            const days    = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const months  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+            document.getElementById('display_clock').textContent = `${h12}:${minutes}:${seconds} ${ampm}`;
+            document.getElementById('display_date').textContent  = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+        }
+
+        setInterval(update_clock, 1000);
+        update_clock();
+
+        // ==================== FETCH ====================
+        function fetch_all_tables_serving() {
+            return fetch(base_url + 'i.php/sys_control/load_all_tables_serving', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                display_all_tables(data);
+            })
+            .catch(() => {
+                document.getElementById('tables_grid').innerHTML = `
+                    <div class="no-tables">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <p>Unable to load queue data. Retrying...</p>
+                    </div>
+                `;
+            });
+        }
+
+        // ==================== DISPLAY ====================
+        function display_all_tables(data) {
+            const grid = document.getElementById('tables_grid');
+
+            if (!data || data.status === 'empty' || !data.tables?.length) {
+                grid.innerHTML = `
+                    <div class="no-tables">
+                        <i class="bi bi-grid"></i>
+                        <p>No active tables found.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = data.tables.map(table => {
+                const has_client      = table.current_sequence !== null;
+                const card_class      = has_client ? 'active' : 'empty';
+                const type_prefix     = type_prefix_map[table.transaction_class]  || '';
+                const priority_prefix = priority_prefix_map[table.priority_level] || '';
+                const sequence        = has_client ? String(table.current_sequence).padStart(3, '0') : null;
+                const queue_number    = has_client ? `${priority_prefix}:${type_prefix}-${sequence}` : '---';
+                const full_name       = table.full_name || '---';
+                const type_label      = has_client ? (class_label_map[table.transaction_class]    || '---') : '---';
+                const priority_label  = has_client ? (priority_label_map[table.priority_level]    || '---') : '---';
+
+                return `
+                    <div class="table-card ${card_class}">
+                        <div class="card-accent"></div>
+                        <div class="card-body-inner">
+                            <div class="card-top">
+                                <div class="table-name-tag">
+                                    <span class="status-dot"></span>
+                                    <span class="table-name-text">
+                                        <i class="bi bi-grid me-1"></i>Table ${table.table_value}
+                                    </span>
+                                </div>
+                                <span class="now-serving-pill">
+                                    <i class="bi bi-megaphone-fill me-1"></i>Now Serving
+                                </span>
+                            </div>
+                            <div class="queue-number-display">
+                                <div class="queue-number-label">Queue Number</div>
+                                <div class="queue-number-value">${queue_number}</div>
+                            </div>
+                            <div class="client-info mt-2">
+                                <div class="client-name">
+                                    <i class="bi bi-person-fill me-1 opacity-50"></i>${full_name}
+                                </div>
+                                <div class="client-type">
+                                    <i class="bi bi-tag me-1 opacity-50"></i>${type_label} &bull; ${priority_label}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==================== SSE ====================
+        let sse_source = null;
+
+        function start_sse() {
+            if (sse_source) sse_source.close();
+
+            sse_source = new EventSource(base_url + 'i.php/sys_control/sse_stream');
+
+            sse_source.addEventListener('queue_update', () => {
+                fetch_all_tables_serving();
+            });
+
+            sse_source.addEventListener('error', () => {
+                sse_source.close();
+                sse_source = null;
+                setInterval(fetch_all_tables_serving, 3000);
+            });
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (sse_source) sse_source.close();
+            } else {
+                fetch_all_tables_serving();
+                start_sse();
+            }
+        });
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch_all_tables_serving();
+            start_sse();
+        });
+    </script>
+</body>
+</html>

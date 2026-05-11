@@ -1410,4 +1410,126 @@ class Sys_model extends CI_Model {
 			sleep(1);
 		}
 	}
+	public function clear_table()
+	{
+	    header('Content-Type: application/json');
+	    date_default_timezone_set('Asia/Manila');
+
+	    $user_id = $this->session->userdata('user_id');
+
+	    // Get the table assigned to this user
+	    $table = $this->db->query(
+	        "SELECT table_id FROM table_data WHERE user_id = ? AND table_status = 2 LIMIT 1",
+	        [$user_id]
+	    )->row();
+
+	    if (!$table) {
+	        echo json_encode([
+	            'status'  => 'empty',
+	            'message' => 'No table currently assigned to you.'
+	        ]);
+	        exit;
+	    }
+
+	    $this->db->trans_start();
+
+	    // Return any active transaction on this table back to queue
+	    $this->db->query(
+	        "UPDATE transaction_data
+	         SET transaction_status = 0, table_id = NULL
+	         WHERE table_id = ? AND transaction_status = 2",
+	        [$table->table_id]
+	    );
+
+	    // Release the table
+	    $this->db->query(
+	        "UPDATE table_data
+	         SET table_status = 1, user_id = NULL
+	         WHERE table_id = ?",
+	        [$table->table_id]
+	    );
+
+	    $this->db->trans_complete();
+
+	    if ($this->db->trans_status() === false) {
+	        echo json_encode([
+	            'status'  => 'error',
+	            'message' => 'Failed to clear table. Please try again.'
+	        ]);
+	        exit;
+	    }
+
+	    $this->broadcast_update();
+
+	    echo json_encode([
+	        'status'  => 'success',
+	        'message' => 'Table cleared successfully.'
+	    ]);
+	    exit;
+	}
+	public function load_all_tables_serving()
+	{
+	    header('Content-Type: application/json');
+	    date_default_timezone_set('Asia/Manila');
+
+	    $current_date = date('Y-m-d');
+
+	    $sql = "SELECT 
+	                t.table_id,
+	                t.table_value,
+	                t.table_status,
+	                t.user_id,
+	                td.transaction_sequence AS current_sequence,
+	                td.transaction_class,
+	                td.priority_level,
+	                cd.first_name,
+	                cd.middle_name,
+	                cd.last_name
+	            FROM table_data t
+	            LEFT JOIN transaction_data td ON (
+	                td.table_id             = t.table_id
+	                AND td.transaction_status   = 2
+	                AND td.transaction_schedule = ?
+	            )
+	            LEFT JOIN client_data cd ON cd.client_data_id = td.client_data_id
+	            ORDER BY t.table_id ASC
+	    ";
+	    $query = $this->db->query($sql, [$current_date]);
+	    $rows  = $query->result();
+
+	    if (empty($rows)) {
+	        echo json_encode([
+	            'status' => 'empty',
+	            'tables' => []
+	        ]);
+	        exit;
+	    }
+
+	    $tables = array_map(function($row) {
+	        $full_name = null;
+	        if ($row->first_name) {
+	            $full_name = trim(implode(' ', array_filter([
+	                $row->first_name,
+	                $row->middle_name,
+	                $row->last_name
+	            ])));
+	        }
+
+	        return [
+	            'table_id'           => $row->table_id,
+	            'table_value'        => $row->table_value,
+	            'table_status'       => $row->table_status,
+	            'current_sequence'   => $row->current_sequence,
+	            'transaction_class'  => $row->transaction_class,
+	            'priority_level'     => $row->priority_level,
+	            'full_name'          => $full_name
+	        ];
+	    }, $rows);
+
+	    echo json_encode([
+	        'status' => 'success',
+	        'tables' => $tables
+	    ]);
+	    exit;
+	}
 }

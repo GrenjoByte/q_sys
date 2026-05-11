@@ -108,9 +108,13 @@
                     <!-- Table -->
                     <div>
                         <div class="control-title"><i class="bi bi-grid"></i> TABLE</div>
-                        <select id="counter_window" class="form-select">
-                            
-                        </select>
+                        <div class="d-flex align-items-center gap-2">
+                            <select id="counter_window" class="form-select">
+                            </select>
+                            <button id="clear_table_btn" class="btn btn-danger" title="Clear Table">
+                                <i class="bi bi-eraser-fill"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1050,6 +1054,71 @@ function init_refresh_btn() {
     });
 }
 
+function fetch_clear_table() {
+    fetch(base_url + 'i.php/sys_control/clear_table', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            show_notification(data.message, 'success');
+
+            // Reset all options to unowned state
+            const counter_window_el = document.getElementById('counter_window');
+            Array.from(counter_window_el.options).forEach(opt => {
+                opt.setAttribute('data-is-mine', '0');
+                opt.setAttribute('data-table-status', '1');
+                const base_label = opt.value;
+                opt.textContent  = `Table ${base_label}`;
+            });
+
+            // Reload table options from DB to reflect accurate state
+            fetch_table_options().then(() => {
+                refresh_panel();
+            });
+
+        } else {
+            show_notification(data.message, 'warning');
+        }
+    })
+    .catch(() => {
+        show_notification('Network error. Please check your connection and try again.', 'warning');
+    });
+}
+
+function init_clear_table_btn() {
+    const clear_table_btn = document.getElementById('clear_table_btn');
+    if (!clear_table_btn) return;
+
+    clear_table_btn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear your table? Any active transaction will be returned to the queue.')) {
+            fetch_clear_table();
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ==================== POLLING ====================
 
 let polling_interval = null;
@@ -1193,6 +1262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     init_call_client_btn();
     init_serve_btn();
     init_create_account();
+    init_clear_table_btn();
 });
 
 document.addEventListener('DOMContentLoaded', refresh_panel);

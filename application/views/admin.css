@@ -187,7 +187,7 @@ body {
     gap: 12px;
 }
 
-.btn-call, .btn-complete, .btn-serve, .btn-unserve, .btn-back, .btn-skip, .btn-refresh {
+.btn-call, .btn-complete, .btn-serve, .btn-unserve, .btn-back, .btn-skip, .btn-refresh, .btn-clear-table {
     padding: 8px 20px;
     border-radius: 12px;
     font-size: 13px;
@@ -266,6 +266,16 @@ body {
     color: white;
 }
 .btn-refresh:hover {
+    background: #2563EB; /* darker blue */
+    transform: translateY(-2px);
+}
+
+/* CLEAR TABLE */
+.btn-clear-table {
+    background: #3B82F6;
+    color: white;
+}
+.btn-clear-table:hover {
     background: #2563EB; /* darker blue */
     transform: translateY(-2px);
 }
