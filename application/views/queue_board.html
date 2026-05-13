@@ -14,20 +14,34 @@
 
     <!-- Header -->
     <div class="display-header">
-        <div class="header-logo">
-            <img src="<?php echo base_url(); ?>images/admin_images/logopsa.webp" alt="PSA Logo">
-            <div>
-                <h1>Philippine Statistics Authority</h1>
-                <p>Queue Display Board &mdash; Samar</p>
+        <!-- Left: Logo -->
+        <div class="header-left">
+            <div class="header-logo">
+                <img src="<?php echo base_url(); ?>images/admin_images/logopsa.webp" alt="PSA Logo">
+                <div>
+                    <h1>Philippine Statistics Authority</h1>
+                    <p>Queue Display Board &mdash; Samar</p>
+                </div>
             </div>
         </div>
-        <div class="live-badge">
-            <span class="live-dot"></span> LIVE
+
+        <!-- Center: Live Badge -->
+        <div class="header-center">
+            <div class="live-badge">
+                <span class="live-dot"></span> LIVE
+            </div>
         </div>
+
+        <!-- Right: Clock + Theme Toggle -->
+        <div class="header-right">
+        <button class="theme-toggle-btn" id="theme_toggle_btn" title="Toggle light/dark mode">
+            <i class="bi bi-moon-fill" id="theme_icon"></i>
+        </button>
         <div class="header-clock">
             <div class="clock-time" id="display_clock">--:-- --</div>
             <div class="clock-date" id="display_date">---</div>
         </div>
+    </div>
     </div>
 
     <!-- Tables -->
@@ -91,6 +105,30 @@
 
         setInterval(update_clock, 1000);
         update_clock();
+
+        // ==================== THEME TOGGLE ====================
+        const THEME_KEY = 'psa_queue_theme';
+
+        function apply_theme(mode) {
+            const icon = document.getElementById('theme_icon');
+
+            if (mode === 'light') {
+                document.body.classList.add('light-mode');
+                icon.className = 'bi bi-sun-fill';
+            } else {
+                document.body.classList.remove('light-mode');
+                icon.className = 'bi bi-moon-fill';
+            }
+
+            localStorage.setItem(THEME_KEY, mode);
+        }
+
+        document.getElementById('theme_toggle_btn').addEventListener('click', () => {
+            const current = localStorage.getItem(THEME_KEY) || 'dark';
+            apply_theme(current === 'dark' ? 'light' : 'dark');
+        });
+
+        apply_theme(localStorage.getItem(THEME_KEY) || 'dark');
 
         // ==================== FETCH ====================
         function fetch_all_tables_serving() {

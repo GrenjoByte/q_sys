@@ -572,9 +572,11 @@ function fetch_table_options() {
     .then(res => res.json())
     .then(data => {
         display_table_options(data);
+        return data;
     })
     .catch(() => {
         display_table_options(null);
+        return null;
     });
 }
 
@@ -593,43 +595,45 @@ function display_table_options(data) {
                 data-table-id="${item.table_id}"
                 data-table-status="${item.table_status}"
                 data-is-mine="${item.is_mine}"
-                ${item.is_mine == 1 ? 'selected' : ''}>
+                ${item.is_mine == 1 ? 'selected' : ''}
+                ${item.table_status == 2 && item.is_mine == 0 ? 'disabled' : ''}>
             Table ${item.table_value}${item.is_mine == 1 ? ' (Yours)' : item.table_status == 2 ? ' (In Use)' : ''}
         </option>
     `).join('');
 
-    // Auto-select the option marked as mine
+    // Auto-select mine, otherwise empty
     const my_table = counter_window_el.querySelector('option[data-is-mine="1"]');
-    const first_available = Array.from(counter_window_el.options).find(opt => opt.getAttribute('data-table-status') != 2);
-
     if (my_table) {
         counter_window_el.value = my_table.value;
-    } else if (first_available) {
-        counter_window_el.value = first_available.value;
+    } else {
+        counter_window_el.selectedIndex = -1;
+    }
+}
+
+
+// Bind change listener once — outside display_table_options
+document.getElementById('counter_window')?.addEventListener('change', () => {
+    const counter_window_el = document.getElementById('counter_window');
+    const selected          = counter_window_el.options[counter_window_el.selectedIndex];
+    if (!selected) return;
+
+    const is_in_use = selected.getAttribute('data-table-status') == 2;
+    const is_mine   = selected.getAttribute('data-is-mine') == 1;
+
+    // Hard block on in-use tables not owned by this user
+    if (is_in_use && !is_mine) {
+        show_notification('This table is currently in use by another user.', 'warning');
+        const my_table = Array.from(counter_window_el.options).find(opt => opt.getAttribute('data-is-mine') == 1);
+        counter_window_el.value = my_table ? my_table.value : '';
+        if (!my_table) counter_window_el.selectedIndex = -1;
+        return;
     }
 
-    // Update labels on change
-    counter_window_el.addEventListener('change', () => {
-        const selected = counter_window_el.options[counter_window_el.selectedIndex];
-
-        // Unmark all options
-        Array.from(counter_window_el.options).forEach(opt => {
-            const base_label = `Table ${opt.value}`;
-            const was_mine   = opt.getAttribute('data-is-mine') == 1;
-            const in_use     = opt.getAttribute('data-table-status') == 2;
-
-            opt.setAttribute('data-is-mine', '0');
-
-            if (opt === selected) return; // handle selected separately
-            opt.textContent = base_label + (in_use && !was_mine ? ' (In Use)' : '');
-        });
-
-        // Mark selected as yours
-        selected.setAttribute('data-is-mine', '1');
-        selected.setAttribute('data-table-status', '2');
-        selected.textContent = `Table ${selected.value} (Yours)`;
+    fetch_set_table_status().then(() => {
+        save_control_preferences();
+        refresh_panel();
     });
-}
+});
 
 function fetch_grab_client(exclude_id = null, min_sequence = null) {
     const priority_level    = document.getElementById('priority_level').value;
@@ -681,16 +685,22 @@ function init_serve_btn() {
 function fetch_set_table_status() {
     const counter_window_el = document.getElementById('counter_window');
     const selected_option   = counter_window_el.options[counter_window_el.selectedIndex];
-    const table_id          = selected_option.getAttribute('data-table-id');
-    const is_in_use         = selected_option.getAttribute('data-table-status') == 2;
-    const is_mine           = selected_option.getAttribute('data-is-mine') == 1;
 
-    // Block silently if table is taken by another user
+    if (!selected_option) return Promise.resolve();
+
+    const table_id    = selected_option.getAttribute('data-table-id');
+    const table_value = selected_option.value;
+    const is_in_use   = selected_option.getAttribute('data-table-status') == 2;
+    const is_mine     = selected_option.getAttribute('data-is-mine') == 1;
+
+    // Hard block — taken by another user
     if (is_in_use && !is_mine) {
-        // Revert selection back to the user's own table
+        show_notification('This table is currently in use by another user.', 'warning');
         const my_table = Array.from(counter_window_el.options).find(opt => opt.getAttribute('data-is-mine') == 1);
         if (my_table) {
             counter_window_el.value = my_table.value;
+        } else {
+            counter_window_el.selectedIndex = -1;
         }
         return Promise.resolve();
     }
@@ -708,17 +718,29 @@ function fetch_set_table_status() {
     .then(res => res.json())
     .then(data => {
         if (data.status === 'success') {
-            Array.from(counter_window_el.options).forEach(opt => {
-                opt.setAttribute('data-is-mine', '0');
+            // Reload from DB then re-select the table we just claimed
+            fetch_table_options().then(() => {
+                const counter_window_el = document.getElementById('counter_window');
+                const claimed = Array.from(counter_window_el.options).find(opt =>
+                    opt.getAttribute('data-table-id') == table_id
+                );
+                if (claimed) {
+                    counter_window_el.value = claimed.value;
+                    // Update attributes to reflect ownership
+                    claimed.setAttribute('data-is-mine', '1');
+                    claimed.setAttribute('data-table-status', '2');
+                    claimed.textContent = `Table ${claimed.value} (Yours)`;
+                }
             });
-            selected_option.setAttribute('data-is-mine', '1');
-            selected_option.setAttribute('data-table-status', '2');
         } else {
             show_notification(data.message, 'warning');
+            // Revert to accurate DB state
+            fetch_table_options();
         }
     })
     .catch(() => {
         show_notification('Network error. Please check your connection and try again.', 'warning');
+        fetch_table_options();
     });
 }
 
@@ -788,9 +810,10 @@ function init_create_account() {
 function save_control_preferences() {
     const priority_level    = document.getElementById('priority_level').value;
     const transaction_class = document.getElementById('transaction_class').value;
-    const counter_window    = document.getElementById('counter_window').value;
     const counter_window_el = document.getElementById('counter_window');
-    const table_id          = counter_window_el.options[counter_window_el.selectedIndex]?.getAttribute('data-table-id');
+    const selected_option   = counter_window_el.options[counter_window_el.selectedIndex];
+    const counter_window    = selected_option?.value    || '';
+    const table_id          = selected_option?.getAttribute('data-table-id') || null;
 
     fetch(base_url + 'i.php/sys_control/save_control_preferences', {
         method: 'POST',
@@ -815,8 +838,6 @@ function restore_control_preferences(data) {
 
     if (data.priority_level)    priority_el.value = data.priority_level;
     if (data.transaction_class) class_el.value    = data.transaction_class;
-
-    // counter_window is restored after table options are loaded
 }
 
 function fetch_control_preferences() {
@@ -1066,21 +1087,10 @@ function fetch_clear_table() {
     .then(data => {
         if (data.status === 'success') {
             show_notification(data.message, 'success');
-
-            // Reset all options to unowned state
-            const counter_window_el = document.getElementById('counter_window');
-            Array.from(counter_window_el.options).forEach(opt => {
-                opt.setAttribute('data-is-mine', '0');
-                opt.setAttribute('data-table-status', '1');
-                const base_label = opt.value;
-                opt.textContent  = `Table ${base_label}`;
-            });
-
-            // Reload table options from DB to reflect accurate state
             fetch_table_options().then(() => {
+                document.getElementById('counter_window').selectedIndex = -1;
                 refresh_panel();
             });
-
         } else {
             show_notification(data.message, 'warning');
         }
@@ -1150,6 +1160,8 @@ document.addEventListener('visibilitychange', () => {
 
 // ==================== SSE REAL-TIME ====================
 
+// ==================== SSE REAL-TIME ====================
+
 let sse_source = null;
 
 function start_sse() {
@@ -1158,30 +1170,59 @@ function start_sse() {
     sse_source = new EventSource(base_url + 'i.php/sys_control/sse_stream');
 
     sse_source.addEventListener('queue_update', () => {
-        refresh_panel();
+        const counter_window_el = document.getElementById('counter_window');
+        const current_table_id  = counter_window_el.options[counter_window_el.selectedIndex]?.getAttribute('data-table-id') ?? null;
+
+        // Reload table options and restore selection after reload
+        fetch_table_options().then(() => {
+            if (current_table_id) {
+                const match = Array.from(counter_window_el.options).find(opt =>
+                    opt.getAttribute('data-table-id') == current_table_id
+                );
+                if (match) counter_window_el.value = match.value;
+            }
+            refresh_panel();
+        });
     });
 
     sse_source.addEventListener('error', () => {
         sse_source.close();
         sse_source = null;
-        // Fallback to polling if SSE fails
-        start_polling(5000);
-    });
-}
+        // Fallback to polling
+        setInterval(() => {
+            const counter_window_el = document.getElementById('counter_window');
+            const current_table_id  = counter_window_el.options[counter_window_el.selectedIndex]?.getAttribute('data-table-id') ?? null;
 
-function stop_sse() {
-    if (sse_source) {
-        sse_source.close();
-        sse_source = null;
-    }
+            fetch_table_options().then(() => {
+                if (current_table_id) {
+                    const match = Array.from(counter_window_el.options).find(opt =>
+                        opt.getAttribute('data-table-id') == current_table_id
+                    );
+                    if (match) counter_window_el.value = match.value;
+                }
+                refresh_panel();
+            });
+        }, 5000);
+    });
 }
 
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-        stop_sse();
+        if (sse_source) sse_source.close();
     } else {
-        start_sse();
-        refresh_panel();
+        const counter_window_el = document.getElementById('counter_window');
+        const current_table_id  = counter_window_el.options[counter_window_el.selectedIndex]?.getAttribute('data-table-id') ?? null;
+
+        fetch_table_options().then(() => {
+            if (current_table_id) {
+                const match = Array.from(counter_window_el.options).find(opt =>
+                    opt.getAttribute('data-table-id') == current_table_id
+                );
+                if (match) counter_window_el.value = match.value;
+            }
+            refresh_panel();
+            start_sse();
+        });
     }
 });
 
@@ -1243,17 +1284,30 @@ document.getElementById('logout_btn')?.addEventListener('dblclick', () => {
 document.addEventListener('DOMContentLoaded', () => {
     fetch_control_preferences().then(prefs => {
         fetch_table_options().then(() => {
+            // counter_window is pre-selected by display_table_options via is_mine
+            // Only override if DB has no table assigned but prefs have a value
             if (prefs && prefs.counter_window) {
                 const counter_window_el = document.getElementById('counter_window');
-                const match = Array.from(counter_window_el.options).find(opt => opt.value === prefs.counter_window);
-                if (match) counter_window_el.value = prefs.counter_window;
+                const my_table          = counter_window_el.querySelector('option[data-is-mine="1"]');
+
+                // Only restore from prefs if no table is currently mine in DB
+                if (!my_table) {
+                    const match = Array.from(counter_window_el.options).find(opt =>
+                        opt.value === prefs.counter_window &&
+                        opt.getAttribute('data-table-status') != 2
+                    );
+                    if (match) counter_window_el.value = match.value;
+                }
             }
-            save_control_preferences();
-            fetch_set_table_status();
-            refresh_panel();
-            start_sse();
+
+            fetch_set_table_status().then(() => {
+                save_control_preferences();
+                refresh_panel();    
+                start_sse();
+            });
         });
     });
+
     init_complete_btn();
     init_skip_btn();
     init_back_btn();

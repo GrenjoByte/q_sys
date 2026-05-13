@@ -1412,60 +1412,68 @@ class Sys_model extends CI_Model {
 	}
 	public function clear_table()
 	{
-	    header('Content-Type: application/json');
-	    date_default_timezone_set('Asia/Manila');
+		header('Content-Type: application/json');
+		date_default_timezone_set('Asia/Manila');
 
-	    $user_id = $this->session->userdata('user_id');
+		$user_id = $this->session->userdata('user_id');
 
-	    // Get the table assigned to this user
-	    $table = $this->db->query(
-	        "SELECT table_id FROM table_data WHERE user_id = ? AND table_status = 2 LIMIT 1",
-	        [$user_id]
-	    )->row();
+		// Get the table assigned to this user
+		$table = $this->db->query(
+			"SELECT table_id FROM table_data WHERE user_id = ? AND table_status = 2 LIMIT 1",
+			[$user_id]
+		)->row();
 
-	    if (!$table) {
-	        echo json_encode([
-	            'status'  => 'empty',
-	            'message' => 'No table currently assigned to you.'
-	        ]);
-	        exit;
-	    }
+		if (!$table) {
+			echo json_encode([
+				'status'  => 'empty',
+				'message' => 'No table currently assigned to you.'
+			]);
+			exit;
+		}
 
-	    $this->db->trans_start();
+		$this->db->trans_start();
 
-	    // Return any active transaction on this table back to queue
-	    $this->db->query(
-	        "UPDATE transaction_data
-	         SET transaction_status = 0, table_id = NULL
-	         WHERE table_id = ? AND transaction_status = 2",
-	        [$table->table_id]
-	    );
+		// Return any active transaction on this table back to queue
+		$this->db->query(
+			"UPDATE transaction_data
+			SET transaction_status = 0, table_id = NULL
+			WHERE table_id = ? AND transaction_status = 2",
+			[$table->table_id]
+		);
 
-	    // Release the table
-	    $this->db->query(
-	        "UPDATE table_data
-	         SET table_status = 1, user_id = NULL
-	         WHERE table_id = ?",
-	        [$table->table_id]
-	    );
+		// Release the table
+		$this->db->query(
+			"UPDATE table_data
+			SET table_status = 1, user_id = NULL
+			WHERE table_id = ?",
+			[$table->table_id]
+		);
 
-	    $this->db->trans_complete();
+		// Clear table preference for this user
+		$this->db->query(
+			"UPDATE user_preferences
+			SET table_id = NULL, counter_window = NULL
+			WHERE user_id = ?",
+			[$user_id]
+		);
 
-	    if ($this->db->trans_status() === false) {
-	        echo json_encode([
-	            'status'  => 'error',
-	            'message' => 'Failed to clear table. Please try again.'
-	        ]);
-	        exit;
-	    }
+		$this->db->trans_complete();
 
-	    $this->broadcast_update();
+		if ($this->db->trans_status() === false) {
+			echo json_encode([
+				'status'  => 'error',
+				'message' => 'Failed to clear table. Please try again.'
+			]);
+			exit;
+		}
 
-	    echo json_encode([
-	        'status'  => 'success',
-	        'message' => 'Table cleared successfully.'
-	    ]);
-	    exit;
+		$this->broadcast_update();
+
+		echo json_encode([
+			'status'  => 'success',
+			'message' => 'Table cleared successfully.'
+		]);
+		exit;
 	}
 	public function load_all_tables_serving()
 	{
