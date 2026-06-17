@@ -169,5 +169,19 @@ class Sys_control extends CI_Controller
 		$this->load->model('sys_model');
 		$this->sys_model->update_transaction();
 	}
-	
+	public function clear_table()
+	{
+	    $this->require_login();
+	    $this->load->model('sys_model');
+	    $this->sys_model->clear_table();
+	}
+	public function load_all_tables_serving()
+	{
+	    $this->load->model('sys_model');
+	    $this->sys_model->load_all_tables_serving();
+	}
+	public function queue_board()
+	{
+		$this->load->view('queue_board.html');	
+	}
 }
